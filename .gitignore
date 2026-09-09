@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+
+# Lokale SQLite-Datenbank und generierte VAPID-Schlüssel
+server/data/*.sqlite
+server/data/*.sqlite-*
+server/data/vapid.json
+
+# lokale Env-Overrides
+.env
+.env.local

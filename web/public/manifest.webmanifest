@@ -1,0 +1,12 @@
+{
+  "name": "Knospi – Pflanzenpflege",
+  "short_name": "Knospi",
+  "description": "Behält Erdfeuchte, Licht, Luftfeuchte und Temperatur deiner Pflanzen im Blick.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F6F5EF",
+  "theme_color": "#3C7A2E",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
