@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { db } from './index.js';
 import { PLANT_TYPES } from './plantTypes.js';
 import { ROOMS, PLANTS } from './seedData.js';
@@ -17,7 +18,7 @@ function sampleValue([min, max], target) {
 // mood -> welche Metrik ausserhalb des Bereichs liegen soll
 const MOOD_TARGET_METRIC = { thirsty: 'soil', dark: 'light', cold: 'temp', air: 'humidity', hungry: 'fert' };
 
-function run() {
+export function seedDatabase() {
   const insertType = db.prepare(`
     INSERT OR REPLACE INTO plant_types
       (id,name,latin,tip,lore,care_light,care_spot,care_water,care_temp,care_food,care_room,
@@ -126,4 +127,16 @@ function run() {
   console.log(`Seed abgeschlossen: ${PLANT_TYPES.length} Pflanzenarten, ${ROOMS.length} Räume, ${PLANTS.length} Pflanzen.`);
 }
 
-run();
+// Fuer den Serverstart in einer frischen Umgebung (z. B. nach einem Deploy
+// mit leerer/ephemerer SQLite-Datei): nur seeden, wenn noch keine Pflanzen
+// vorhanden sind, damit ein Neustart echte Nutzerdaten nie ueberschreibt.
+export function seedIfEmpty() {
+  const { c } = db.prepare('SELECT COUNT(*) c FROM plants').get();
+  if (c === 0) seedDatabase();
+}
+
+// Nur automatisch ausfuehren, wenn die Datei direkt per CLI gestartet wird
+// (npm run seed) - beim Import durch den Server (fuer seedIfEmpty) nicht.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  seedDatabase();
+}
