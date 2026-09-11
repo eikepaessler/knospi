@@ -15,7 +15,7 @@
     "start": "node server/src/index.js"
   },
   "engines": {
-    "node": ">=22"
+    "node": "22.x"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
