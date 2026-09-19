@@ -5,7 +5,7 @@ export const ROOMS = [
   { id: 'schlaf', name: 'Schlafzimmer' }
 ];
 
-// mood: happy | thirsty | dark | cold | air | hungry -> steuert die
+// mood: happy | thirsty | soggy | dark | cold | air -> steuert die
 // simulierten Startmesswerte (ok / low / high je Metrik).
 export const PLANTS = [
   { id: 'p1', name: 'Wilma', type: 'begonia', room: 'wohn', days: 148, bond: 4, sensor: '8F2A', mood: 'thirsty', wateredDaysAgo: 9,
@@ -16,8 +16,8 @@ export const PLANTS = [
     says: 'Ich sammle Sonne wie Münzen. Läuft gut.' },
   { id: 'p4', name: 'Ben', type: 'bamboo', room: 'wohn', days: 211, bond: 4, sensor: 'A104', mood: 'happy', wateredDaysAgo: 2,
     says: 'Ich rausche leise vor mich hin. Alles im Lot.' },
-  { id: 'p5', name: 'Monti', type: 'monstera', room: 'wohn', days: 402, bond: 5, sensor: 'B920', mood: 'hungry', wateredDaysAgo: 3,
-    says: 'Die Erde hier ist ausgelutscht. Ein bisschen Dünger und ich bin wieder wer.' },
+  { id: 'p5', name: 'Monti', type: 'monstera', room: 'wohn', days: 402, bond: 5, sensor: 'B920', mood: 'soggy', wateredDaysAgo: 1,
+    says: 'Ganz schön nass hier unten. Lass mich abtrocknen.' },
   { id: 'p6', name: 'Ronny', type: 'strelitzia', room: 'wohn', days: 327, bond: 4, sensor: '5E31', mood: 'happy', wateredDaysAgo: 5,
     says: 'Breite Blätter, breites Grinsen. Weiter so.' },
   { id: 'p7', name: 'Billy', type: 'bonsai', room: 'wohn', days: 612, bond: 5, sensor: null, mood: 'happy', wateredDaysAgo: 3,
@@ -48,8 +48,8 @@ export const PLANTS = [
     says: 'Ich brauche nichts. Wirklich nichts.' },
   { id: 'p20', name: 'Kaki', type: 'cactus', room: 'schlaf', days: 430, bond: 3, sensor: null, mood: 'happy', wateredDaysAgo: 28,
     says: 'Was Kaka sagt. Nur stacheliger.' },
-  { id: 'p21', name: 'Gigi', type: 'rubber', room: 'schlaf', days: 289, bond: 4, sensor: 'C205', mood: 'happy', wateredDaysAgo: 9,
-    says: 'Meine Blätter glänzen. Danke fürs Abstauben.' },
+  { id: 'p21', name: 'Gigi', type: 'rubber', room: 'schlaf', days: 289, bond: 4, sensor: 'C205', mood: 'cold', wateredDaysAgo: 9,
+    says: 'Mir ist kalt an den Wurzeln. Zugluft, oder?' },
   { id: 'p22', name: 'Elli', type: 'pothos', room: 'schlaf', days: 101, bond: 3, sensor: null, mood: 'happy', wateredDaysAgo: 7,
     says: 'Nachtruhe wird hier großgeschrieben. Sehr angenehm.' }
 ];

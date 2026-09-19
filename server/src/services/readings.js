@@ -1,8 +1,11 @@
 import { db } from '../db/index.js';
-import { computeMetricStatuses, fertStatus, moodFromStatuses, METRIC_LABEL, METRIC_TONE, MOOD_SAYS, notificationMessage } from './comparator.js';
+import {
+  computeMetricStatuses, moodFromStatuses, METRIC_LABEL,
+  MOOD_SAYS, MOOD_META, FIX_ALL_OK_SAYS, FIX_PARTIAL_SAYS, notificationMessage
+} from './comparator.js';
 import { broadcast } from './events.js';
 import { pushToAll } from './push.js';
-import { getSettings, isQuietHours } from './settings.js';
+import { getSettings } from './settings.js';
 import { getPlantDecorated } from './plants.js';
 
 function notify(plant, metric, status) {
@@ -16,37 +19,36 @@ function notify(plant, metric, status) {
   const notification = { id: info.lastInsertRowid, plantId: plant.id, plantName: plant.name, metric, status, message, createdAt: new Date().toISOString(), read: false };
   broadcast('notification', notification);
 
+  // Von den drei Push-Anlaessen im Briefing (Wasser noetig, Sensor offline,
+  // Wochenrueckblick) loest hier nur "braucht Wasser" aus - alle anderen
+  // Metrikwechsel bleiben In-App-only (Zuhause-Screen ist die Wahrheit).
   const settings = getSettings();
-  const isProblem = status !== 'ok';
-  const isUrgentEnough = !settings.urgent || METRIC_TONE[metric] === 'bad';
-  const inQuietHours = settings.night && isQuietHours();
-  if (settings.push && isProblem && isUrgentEnough && !inQuietHours) {
-    pushToAll({
-      title: `${METRIC_LABEL[metric]}-Alarm: ${plant.name}`,
-      body: message,
-      plantId: plant.id
-    }).catch(() => {});
+  const isDryAlert = metric === 'soil' && status === 'low';
+  if (settings.push && settings.dryReminder && isDryAlert) {
+    pushToAll({ title: `${plant.name} braucht Wasser`, body: message, plantId: plant.id }).catch(() => {});
   }
   return notification;
+}
+
+function typeRangeOf(typeRow) {
+  return {
+    soil: [typeRow.soil_min, typeRow.soil_max],
+    light: [typeRow.light_min, typeRow.light_max],
+    temp: [typeRow.temp_min, typeRow.temp_max],
+    humidity: [typeRow.humidity_min, typeRow.humidity_max]
+  };
 }
 
 // Wendet einen Messwert (von echtem Sensor oder Simulator) auf die Pflanze
 // an, leitet den Status neu ab und benachrichtigt bei Zustandswechseln.
 export function applyReading(sensorId, reading) {
   const plantRow = db.prepare('SELECT * FROM plants WHERE sensor_id = ?').get(sensorId);
-  if (!plantRow) throw new Error(`Kein Pflanze fuer Sensor ${sensorId} gefunden`);
+  if (!plantRow) throw new Error(`Keine Pflanze fuer Sensor ${sensorId} gefunden`);
   const type = db.prepare('SELECT * FROM plant_types WHERE id = ?').get(plantRow.type_id);
   const prevStatus = db.prepare('SELECT * FROM plant_status WHERE plant_id = ?').get(plantRow.id) || {};
 
-  const range = {
-    soil: [type.soil_min, type.soil_max],
-    light: [type.light_min, type.light_max],
-    temp: [type.temp_min, type.temp_max],
-    humidity: [type.humidity_min, type.humidity_max]
-  };
-  const statuses = computeMetricStatuses(reading, { range });
-  const fert = fertStatus(plantRow.fertilized_at, type.fert_interval_days);
-  const mood = moodFromStatuses({ ...statuses, fert });
+  const statuses = computeMetricStatuses(reading, { range: typeRangeOf(type) });
+  const mood = moodFromStatuses(statuses);
   const now = new Date().toISOString();
 
   const tx = db.transaction(() => {
@@ -60,11 +62,11 @@ export function applyReading(sensorId, reading) {
     `).run(sensorId, plantRow.id, reading.soil_moisture, reading.light_lux, reading.temperature, reading.humidity, now);
 
     db.prepare(`
-      INSERT INTO plant_status (plant_id, soil, light, temp, humidity, fert, mood, updated_at)
-      VALUES (@plant_id, @soil, @light, @temp, @humidity, @fert, @mood, @updated_at)
+      INSERT INTO plant_status (plant_id, soil, light, temp, humidity, mood, updated_at)
+      VALUES (@plant_id, @soil, @light, @temp, @humidity, @mood, @updated_at)
       ON CONFLICT(plant_id) DO UPDATE SET soil=excluded.soil, light=excluded.light, temp=excluded.temp,
-        humidity=excluded.humidity, fert=excluded.fert, mood=excluded.mood, updated_at=excluded.updated_at
-    `).run({ plant_id: plantRow.id, ...statuses, fert, mood, updated_at: now });
+        humidity=excluded.humidity, mood=excluded.mood, updated_at=excluded.updated_at
+    `).run({ plant_id: plantRow.id, ...statuses, mood, updated_at: now });
 
     db.prepare("UPDATE sensors SET last_seen = ?, connected = 1 WHERE id = ?").run(now, sensorId);
 
@@ -75,9 +77,9 @@ export function applyReading(sensorId, reading) {
   tx();
 
   const plant = getPlantDecorated(plantRow.id);
-  for (const metric of ['soil', 'light', 'temp', 'humidity', 'fert']) {
+  for (const metric of ['soil', 'light', 'temp', 'humidity']) {
     const before = prevStatus[metric] ?? null;
-    const after = { ...statuses, fert }[metric];
+    const after = statuses[metric];
     if (before !== after && after != null) notify(plant, metric, after);
   }
 
@@ -85,67 +87,83 @@ export function applyReading(sensorId, reading) {
   return plant;
 }
 
-// Setzt den Duenge-Zeitpunkt zurueck (Duengen braucht keinen Sensor).
-export function fertilizePlant(plantId) {
-  const plantRow = db.prepare('SELECT * FROM plants WHERE id = ?').get(plantId);
-  if (!plantRow) throw new Error('Pflanze nicht gefunden');
-  const type = db.prepare('SELECT * FROM plant_types WHERE id = ?').get(plantRow.type_id);
-  const prev = db.prepare('SELECT * FROM plant_status WHERE plant_id = ?').get(plantId) || {};
+function unlockSticker(key) {
+  const s = db.prepare('SELECT * FROM stickers WHERE key = ?').get(key);
+  if (!s || s.got) return null;
   const now = new Date().toISOString();
-
-  db.prepare('UPDATE plants SET fertilized_at = ? WHERE id = ?').run(now, plantId);
-  const fert = fertStatus(now, type.fert_interval_days);
-  const mood = moodFromStatuses({ soil: prev.soil, light: prev.light, temp: prev.temp, humidity: prev.humidity, fert });
-  db.prepare('UPDATE plant_status SET fert = ?, mood = ?, updated_at = ? WHERE plant_id = ?').run(fert, mood, now, plantId);
-  if (mood !== (prev.mood || 'happy') && MOOD_SAYS[mood]) {
-    db.prepare('UPDATE plants SET says = ? WHERE id = ?').run(MOOD_SAYS[mood], plantId);
-  }
-
-  const plant = getPlantDecorated(plantId);
-  if (prev.fert !== fert) notify(plant, 'fert', fert);
-  broadcast('plant-updated', plant);
-  return plant;
+  db.prepare('UPDATE stickers SET got = 1, unlocked_at = ? WHERE key = ?').run(now, key);
+  const sticker = { ...s, got: true, unlocked_at: now };
+  broadcast('sticker-unlocked', sticker);
+  return sticker;
 }
 
+// Giessen: setzt wateredAt und schiebt die Erdfeuchte (bei Sensor) auf einen
+// Wert in der Mitte des Idealbereichs - simuliert den unmittelbaren Effekt.
 export function waterPlant(plantId) {
   const plantRow = db.prepare('SELECT * FROM plants WHERE id = ?').get(plantId);
   if (!plantRow) throw new Error('Pflanze nicht gefunden');
-  db.prepare('UPDATE plants SET watered_at = ? WHERE id = ?').run(new Date().toISOString(), plantId);
+  const now = new Date().toISOString();
+  db.prepare('UPDATE plants SET watered_at = ? WHERE id = ?').run(now, plantId);
 
+  const reward = unlockSticker('green_thumb');
+
+  let plant;
   if (plantRow.sensor_id) {
     const type = db.prepare('SELECT * FROM plant_types WHERE id = ?').get(plantRow.type_id);
     const mid = (type.soil_min + type.soil_max) / 2;
-    return applyReading(plantRow.sensor_id, {
+    plant = applyReading(plantRow.sensor_id, {
       soil_moisture: Math.round(mid * 10) / 10,
-      light_lux: plantRow.light_lux,
-      temperature: plantRow.temperature,
-      humidity: plantRow.humidity
+      light_lux: plantRow.light_lux, temperature: plantRow.temperature, humidity: plantRow.humidity
     });
+  } else {
+    plant = getPlantDecorated(plantId);
   }
-  return getPlantDecorated(plantId);
+  return { plant, reward };
 }
 
-// Generische "Ich kuemmere mich"-Aktion: behebt die aktuell dringendste
-// Metrik der Pflanze, analog zum fixPlant() im Prototyp.
-export function fixPlant(plantId) {
-  const plant = getPlantDecorated(plantId);
-  if (!plant) throw new Error('Pflanze nicht gefunden');
-  const metric = plant.fixMetric;
-  if (!metric) return plant;
+// "Ich lass dich abtrocknen": Erdfeuchte auf Mitte des Idealbereichs senken.
+function driedPlant(plantRow, type) {
+  const mid = (type.soil_min + type.soil_max) / 2;
+  return applyReading(plantRow.sensor_id, {
+    soil_moisture: Math.round(mid * 10) / 10,
+    light_lux: plantRow.light_lux, temperature: plantRow.temperature, humidity: plantRow.humidity
+  });
+}
 
-  if (metric === 'fert') return fertilizePlant(plantId);
-  if (metric === 'soil') return waterPlant(plantId);
+// Generische Erledigen-Aktion: behebt die Metrik, die aktuell die Stimmung
+// bestimmt (siehe MOOD_META[mood].fix), aktualisiert says/bond nach den
+// Erledigen-Regeln und meldet zurueck, ob alles wieder ok ist.
+export function fixPlant(plantId) {
+  const before = getPlantDecorated(plantId);
+  if (!before) throw new Error('Pflanze nicht gefunden');
+  if (!before.hasAction) return { plant: before, reward: null };
 
   const row = db.prepare('SELECT * FROM plants WHERE id = ?').get(plantId);
-  if (!row.sensor_id) return plant;
   const type = db.prepare('SELECT * FROM plant_types WHERE id = ?').get(row.type_id);
-  const mid = (key) => Math.round(((type[`${key}_min`] + type[`${key}_max`]) / 2) * 10) / 10;
+  const metric = MOOD_META[before.mood].fix;
 
-  const reading = {
-    soil_moisture: row.soil_moisture,
-    light_lux: metric === 'light' ? mid('light') : row.light_lux,
-    temperature: metric === 'temp' ? mid('temp') : row.temperature,
-    humidity: metric === 'humidity' ? mid('humidity') : row.humidity
-  };
-  return applyReading(row.sensor_id, reading);
+  let plant, reward = null;
+  if (metric === 'soil' && before.mood === 'thirsty') {
+    ({ plant, reward } = waterPlant(plantId));
+  } else if (metric === 'soil' && before.mood === 'soggy') {
+    plant = driedPlant(row, type);
+  } else {
+    const mid = (key) => Math.round(((type[`${key}_min`] + type[`${key}_max`]) / 2) * 10) / 10;
+    plant = applyReading(row.sensor_id, {
+      soil_moisture: row.soil_moisture,
+      light_lux: metric === 'light' ? mid('light') : row.light_lux,
+      temperature: metric === 'temp' ? mid('temp') : row.temperature,
+      humidity: metric === 'humidity' ? mid('humidity') : row.humidity
+    });
+  }
+
+  if (plant.mood === 'happy') {
+    db.prepare('UPDATE plants SET says = ?, bond = MIN(5, bond + 1) WHERE id = ?').run(FIX_ALL_OK_SAYS, plantId);
+  } else {
+    db.prepare('UPDATE plants SET says = ? WHERE id = ?').run(FIX_PARTIAL_SAYS, plantId);
+  }
+
+  plant = getPlantDecorated(plantId);
+  broadcast('plant-updated', plant);
+  return { plant, reward };
 }

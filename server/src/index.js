@@ -14,6 +14,8 @@ import { sensorsRouter } from './routes/sensors.js';
 import { notificationsRouter } from './routes/notifications.js';
 import { pushRouter } from './routes/push.js';
 import { settingsRouter } from './routes/settings.js';
+import { stickersRouter } from './routes/stickers.js';
+import { weekRouter } from './routes/week.js';
 import { sseHandler } from './services/events.js';
 import { startSimulator } from './services/simulator.js';
 
@@ -36,14 +38,17 @@ app.use('/api/sensors', sensorsRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/push', pushRouter);
 app.use('/api/settings', settingsRouter);
+app.use('/api/stickers', stickersRouter);
+app.use('/api/week', weekRouter);
 
-// Im Produktionsbetrieb liefert derselbe Server die gebaute Web-App aus
-// (ein Deployment, eine URL, kein CORS-Setup noetig). Im Dev-Betrieb laeuft
-// die Web-App separat unter Vite (siehe web/vite.config.js Proxy).
-const webDist = path.resolve(__dirname, '../../web/dist');
-if (fs.existsSync(webDist)) {
-  app.use(express.static(webDist));
-  app.get(/^(?!\/api).*/, (req, res) => res.sendFile(path.join(webDist, 'index.html')));
+// Optionale Web-Vorschau: liefert einen "expo export -p web"-Build aus
+// mobile/dist aus, falls vorhanden (fuer einen schnellen Browser-Test ohne
+// Simulator/Geraet). Faellt sonst auf einen alten web/dist-Build zurueck.
+const staticDist = [path.resolve(__dirname, '../../mobile/dist'), path.resolve(__dirname, '../../web/dist')]
+  .find((p) => fs.existsSync(p));
+if (staticDist) {
+  app.use(express.static(staticDist));
+  app.get(/^(?!\/api).*/, (req, res) => res.sendFile(path.join(staticDist, 'index.html')));
 }
 
 app.use((err, req, res, next) => {

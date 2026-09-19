@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "name": "Knospi",
+    "slug": "knospi",
+    "scheme": "knospi",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#DFE4D2",
+    "primaryColor": "#3C7A2E",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "app.knospi.mobile",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Knospi braucht die Kamera, um deine Pflanze zu erkennen und Fotos fürs Album zu machen.",
+        "UIBackgroundModes": ["remote-notification"]
+      }
+    },
+    "android": {
+      "package": "app.knospi.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": ["CAMERA", "NOTIFICATIONS"]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Knospi braucht die Kamera, um deine Pflanze zu erkennen und Fotos fürs Album zu machen."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#3C7A2E"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#DFE4D2",
+          "image": "./assets/icon.png",
+          "imageWidth": 120
+        }
+      ]
+    ]
+  }
+}

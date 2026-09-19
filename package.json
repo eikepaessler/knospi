@@ -4,13 +4,13 @@
   "version": "0.1.0",
   "workspaces": [
     "server",
-    "web"
+    "mobile"
   ],
   "scripts": {
-    "dev": "concurrently -n server,web -c green,cyan \"npm run dev -w server\" \"npm run dev -w web\"",
+    "dev": "concurrently -n server,mobile -c green,cyan \"npm run dev -w server\" \"npm run start -w mobile\"",
     "dev:server": "npm run dev -w server",
-    "dev:web": "npm run dev -w web",
-    "build": "npm run build -w web",
+    "dev:mobile": "npm run start -w mobile",
+    "web-preview": "npm run web -w mobile",
     "seed": "npm run seed -w server",
     "start": "node server/src/index.js"
   },

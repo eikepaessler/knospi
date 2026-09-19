@@ -6,12 +6,12 @@ export const plantTypesRouter = Router();
 plantTypesRouter.get('/', (req, res) => {
   const rows = db.prepare('SELECT * FROM plant_types ORDER BY name').all();
   res.json(rows.map((t) => ({
-    id: t.id, name: t.name, latin: t.latin, tip: t.tip, lore: t.lore,
-    care: { light: t.care_light, spot: t.care_spot, water: t.care_water, temp: t.care_temp, food: t.care_food, room: t.care_room },
-    range: {
-      soil: [t.soil_min, t.soil_max], light: [t.light_min, t.light_max],
-      temp: [t.temp_min, t.temp_max], humidity: [t.humidity_min, t.humidity_max]
-    },
-    fertIntervalDays: t.fert_interval_days
+    id: t.id, name: t.name, latin: t.latin, tip: t.tip, lore: t.lore, roomHint: t.room_hint,
+    richtwerte: [
+      { key: 'soil', label: 'Erdfeuchte', min: t.soil_min, max: t.soil_max, unit: '%', hint: t.soil_hint, provisional: !!t.soil_provisional },
+      { key: 'light', label: 'Licht', min: t.light_min, max: t.light_max, unit: ' lx', hint: t.light_hint, provisional: false },
+      { key: 'temp', label: 'Temperatur', min: t.temp_min, max: t.temp_max, unit: '°C', hint: t.temp_hint, provisional: false },
+      { key: 'humidity', label: 'Luftfeuchte', min: t.humidity_min, max: t.humidity_max, unit: '%', hint: t.humidity_hint, provisional: false }
+    ]
   })));
 });

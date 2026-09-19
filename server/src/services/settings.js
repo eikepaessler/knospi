@@ -1,6 +1,11 @@
 import { db } from '../db/index.js';
 
-const DEFAULTS = { push: true, urgent: false, night: true };
+// Drei Schalter, exakt wie im Profil-Screen des Briefings:
+// push = Master-Schalter, dryReminder = "Erinnerung bei Trockenheit" (die
+// einzige Metrik, die tatsaechlich einen Push ausloest), weeklyRecap =
+// wird derzeit nur gespeichert (der Wochenrueckblick-Versand ist noch
+// nicht als Cron-Job implementiert).
+const DEFAULTS = { push: true, dryReminder: true, weeklyRecap: true, offerRead: false };
 
 export function getSettings() {
   const row = db.prepare("SELECT value FROM settings WHERE key = 'app'").get();
@@ -14,11 +19,4 @@ export function updateSettings(patch) {
     ON CONFLICT(key) DO UPDATE SET value = excluded.value
   `).run(JSON.stringify(next));
   return next;
-}
-
-// "night" = Ruhezeit 22-7 Uhr, in der Push-Benachrichtigungen unterdrueckt
-// werden (die In-App-Benachrichtigung wird trotzdem angelegt).
-export function isQuietHours(date = new Date()) {
-  const h = date.getHours();
-  return h >= 22 || h < 7;
 }

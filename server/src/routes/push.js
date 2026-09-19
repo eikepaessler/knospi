@@ -1,22 +1,16 @@
 import { Router } from 'express';
-import { publicVapidKey, saveSubscription, removeSubscription } from '../services/push.js';
+import { saveExpoToken, removeExpoToken } from '../services/push.js';
 
 export const pushRouter = Router();
 
-pushRouter.get('/public-key', (req, res) => {
-  res.json({ publicKey: publicVapidKey });
-});
-
-pushRouter.post('/subscribe', (req, res) => {
-  const sub = req.body;
-  if (!sub?.endpoint || !sub?.keys?.p256dh || !sub?.keys?.auth) {
-    return res.status(400).json({ error: 'Ungültiges Subscription-Objekt' });
-  }
-  saveSubscription(sub);
+pushRouter.post('/register', (req, res) => {
+  const { token } = req.body;
+  if (!token || typeof token !== 'string') return res.status(400).json({ error: 'Expo-Push-Token fehlt' });
+  saveExpoToken(token);
   res.status(201).end();
 });
 
-pushRouter.post('/unsubscribe', (req, res) => {
-  if (req.body?.endpoint) removeSubscription(req.body.endpoint);
+pushRouter.post('/unregister', (req, res) => {
+  if (req.body?.token) removeExpoToken(req.body.token);
   res.status(204).end();
 });

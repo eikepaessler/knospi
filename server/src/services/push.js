@@ -1,54 +1,41 @@
-import webpush from 'web-push';
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { db } from '../db/index.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const vapidPath = path.resolve(__dirname, '../../data/vapid.json');
+// Push-Benachrichtigungen ueber den Expo Push Service - passend zur
+// React-Native/Expo-App (kein Web Push/VAPID mehr noetig). Jedes Geraet
+// registriert beim App-Start ein Expo-Push-Token, das hier gespeichert wird.
+const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
 
-function loadOrCreateVapidKeys() {
-  if (fs.existsSync(vapidPath)) {
-    return JSON.parse(fs.readFileSync(vapidPath, 'utf-8'));
-  }
-  const keys = webpush.generateVAPIDKeys();
-  fs.mkdirSync(path.dirname(vapidPath), { recursive: true });
-  fs.writeFileSync(vapidPath, JSON.stringify(keys, null, 2));
-  return keys;
-}
-
-const vapidKeys = loadOrCreateVapidKeys();
-webpush.setVapidDetails('mailto:kontakt@knospi.app', vapidKeys.publicKey, vapidKeys.privateKey);
-
-export const publicVapidKey = vapidKeys.publicKey;
-
-export function saveSubscription(sub) {
+export function saveExpoToken(token) {
   db.prepare(`
-    INSERT INTO push_subscriptions (endpoint, p256dh, auth, created_at)
-    VALUES (@endpoint, @p256dh, @auth, @created_at)
-    ON CONFLICT(endpoint) DO UPDATE SET p256dh=excluded.p256dh, auth=excluded.auth
-  `).run({
-    endpoint: sub.endpoint,
-    p256dh: sub.keys.p256dh,
-    auth: sub.keys.auth,
-    created_at: new Date().toISOString()
+    INSERT INTO expo_push_tokens (token, created_at) VALUES (?, ?)
+    ON CONFLICT(token) DO NOTHING
+  `).run(token, new Date().toISOString());
+}
+
+export function removeExpoToken(token) {
+  db.prepare('DELETE FROM expo_push_tokens WHERE token = ?').run(token);
+}
+
+export async function pushToAll({ title, body, plantId }) {
+  const tokens = db.prepare('SELECT token FROM expo_push_tokens').all().map((r) => r.token);
+  if (tokens.length === 0) return;
+
+  const messages = tokens.map((to) => ({ to, title, body, data: { plantId }, sound: 'default' }));
+  const res = await fetch(EXPO_PUSH_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify(messages)
   });
-}
-
-export function removeSubscription(endpoint) {
-  db.prepare('DELETE FROM push_subscriptions WHERE endpoint = ?').run(endpoint);
-}
-
-export async function pushToAll(payload) {
-  const subs = db.prepare('SELECT endpoint, p256dh, auth FROM push_subscriptions').all();
-  const body = JSON.stringify(payload);
-  await Promise.all(subs.map(async (s) => {
-    const subscription = { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } };
-    try {
-      await webpush.sendNotification(subscription, body);
-    } catch (err) {
-      if (err.statusCode === 404 || err.statusCode === 410) removeSubscription(s.endpoint);
-      else console.error('Push-Fehler:', err.message);
+  if (!res.ok) {
+    console.error('Expo Push fehlgeschlagen:', res.status, await res.text().catch(() => ''));
+    return;
+  }
+  const data = await res.json().catch(() => null);
+  // Ungueltig gewordene Tokens (App deinstalliert o.ae.) aus der DB entfernen.
+  const tickets = data?.data || [];
+  tickets.forEach((ticket, i) => {
+    if (ticket.status === 'error' && ticket.details?.error === 'DeviceNotRegistered') {
+      removeExpoToken(tokens[i]);
     }
-  }));
+  });
 }

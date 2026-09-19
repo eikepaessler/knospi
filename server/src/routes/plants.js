@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { db } from '../db/index.js';
 import { nanoid } from '../utils/nanoid.js';
 import { getAllPlantsDecorated, getPlantDecorated, getPlantRow } from '../services/plants.js';
-import { waterPlant, fertilizePlant, fixPlant } from '../services/readings.js';
+import { waterPlant, fixPlant } from '../services/readings.js';
 import { broadcast } from '../services/events.js';
 
 export const plantsRouter = Router();
@@ -37,12 +37,12 @@ plantsRouter.post('/', (req, res) => {
   const id = nanoid();
   const now = new Date().toISOString();
   db.prepare(`
-    INSERT INTO plants (id, name, type_id, room_id, sensor_id, added_at, bond, watered_at, fertilized_at, says)
-    VALUES (?, ?, ?, ?, NULL, ?, 1, NULL, ?, 'Schön, hier zu sein.')
-  `).run(id, name.trim(), typeId, roomId, now, now);
+    INSERT INTO plants (id, name, type_id, room_id, sensor_id, added_at, bond, watered_at, says)
+    VALUES (?, ?, ?, ?, NULL, ?, 1, NULL, 'Schön, hier zu sein.')
+  `).run(id, name.trim(), typeId, roomId, now);
   db.prepare(`
-    INSERT INTO plant_status (plant_id, soil, light, temp, humidity, fert, mood, updated_at)
-    VALUES (?, NULL, NULL, NULL, NULL, 'ok', 'happy', ?)
+    INSERT INTO plant_status (plant_id, soil, light, temp, humidity, mood, updated_at)
+    VALUES (?, NULL, NULL, NULL, NULL, 'happy', ?)
   `).run(id, now);
 
   const plant = getPlantDecorated(id);
@@ -103,18 +103,71 @@ plantsRouter.delete('/:id/sensor', (req, res) => {
   res.json(plant);
 });
 
+// Giessen: { plant, reward } - reward ist ein Sticker-Objekt, wenn dies das
+// erste Giessen ueberhaupt war (fuer das Freischalt-Overlay), sonst null.
 plantsRouter.post('/:id/water', (req, res) => {
   if (!getPlantRow(req.params.id)) return res.status(404).json({ error: 'Pflanze nicht gefunden' });
   res.json(waterPlant(req.params.id));
 });
 
-plantsRouter.post('/:id/fertilize', (req, res) => {
-  if (!getPlantRow(req.params.id)) return res.status(404).json({ error: 'Pflanze nicht gefunden' });
-  res.json(fertilizePlant(req.params.id));
-});
-
-// Generische Pflege-Aktion: behebt automatisch das aktuell dringendste Problem.
+// Generische Erledigen-Aktion: behebt das Problem, das die aktuelle
+// Stimmung bestimmt. { plant, reward }.
 plantsRouter.post('/:id/fix', (req, res) => {
   if (!getPlantRow(req.params.id)) return res.status(404).json({ error: 'Pflanze nicht gefunden' });
   res.json(fixPlant(req.params.id));
+});
+
+// ── Fotoalbum ──
+plantsRouter.get('/:id/photos', (req, res) => {
+  const rows = db.prepare('SELECT * FROM photos WHERE plant_id = ? ORDER BY taken_at ASC').all(req.params.id);
+  res.json(rows.map((p) => ({ id: p.id, uri: p.uri, takenAt: p.taken_at, note: p.note, isFirst: !!p.is_first })));
+});
+
+plantsRouter.post('/:id/photos', (req, res) => {
+  const row = getPlantRow(req.params.id);
+  if (!row) return res.status(404).json({ error: 'Pflanze nicht gefunden' });
+  const { uri, note } = req.body;
+  if (!uri) return res.status(400).json({ error: 'uri fehlt' });
+
+  const isFirst = db.prepare('SELECT COUNT(*) c FROM photos WHERE plant_id = ?').get(row.id).c === 0;
+  const id = nanoid();
+  const now = new Date().toISOString();
+  db.prepare('INSERT INTO photos (id, plant_id, uri, taken_at, note, is_first) VALUES (?, ?, ?, ?, ?, ?)')
+    .run(id, row.id, uri, now, note || null, isFirst ? 1 : 0);
+
+  const plant = getPlantDecorated(row.id);
+  broadcast('plant-updated', plant);
+  res.status(201).json(plant);
+});
+
+// ── Pflanzen-Doktor: Diagnosen ──
+plantsRouter.post('/:id/diagnoses', (req, res) => {
+  const row = getPlantRow(req.params.id);
+  if (!row) return res.status(404).json({ error: 'Pflanze nicht gefunden' });
+  const { name, latin, confidence, tells, steps, photoUri } = req.body;
+  if (!name || !Array.isArray(steps)) return res.status(400).json({ error: 'name und steps sind erforderlich' });
+
+  const id = nanoid();
+  const now = new Date().toISOString();
+  db.prepare(`
+    INSERT INTO diagnoses (id, plant_id, name, latin, confidence, tells, steps, photo_uri, diagnosed_at, healed_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)
+  `).run(id, row.id, name, latin || '', confidence || 0, tells || '', JSON.stringify(steps), photoUri || null, now);
+
+  if (photoUri) {
+    db.prepare('INSERT INTO photos (id, plant_id, uri, taken_at, note, is_first) VALUES (?, ?, ?, ?, ?, 0)')
+      .run(nanoid(), row.id, photoUri, now, `Doktor: ${name}`);
+  }
+
+  const plant = getPlantDecorated(row.id);
+  broadcast('plant-updated', plant);
+  res.status(201).json(plant);
+});
+
+plantsRouter.patch('/:id/diagnoses/:diagId/heal', (req, res) => {
+  db.prepare('UPDATE diagnoses SET healed_at = ? WHERE id = ? AND plant_id = ?')
+    .run(new Date().toISOString(), req.params.diagId, req.params.id);
+  const plant = getPlantDecorated(req.params.id);
+  broadcast('plant-updated', plant);
+  res.json(plant);
 });

@@ -11,3 +11,15 @@ server/data/vapid.json
 # lokale Env-Overrides
 .env
 .env.local
+
+# Expo / React Native (mobile/)
+mobile/.claude/
+.expo/
+.expo-shared/
+*.orig.*
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision

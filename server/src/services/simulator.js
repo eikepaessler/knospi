@@ -7,9 +7,36 @@
 // der Vergleichslogik oder den Benachrichtigungen etwas aendert.
 import { db } from '../db/index.js';
 import { applyReading } from './readings.js';
+import { broadcast } from './events.js';
+import { pushToAll } from './push.js';
+import { getSettings } from './settings.js';
 
 const TICK_MS = 20_000;
+const OFFLINE_MS = 3 * 60_000; // kein Reading seit 3 Minuten -> gilt als offline
 const state = new Map();
+
+// Push-Anlass "Sensor offline": greift v.a. bei echter Hardware, die
+// aufhoert zu senden. Der Simulator aktualisiert verbundene Sensoren bei
+// jedem Tick, daher wird dieser Zweig hier nur fuer echte, gestoppte
+// Sensoren relevant.
+function checkOffline() {
+  const now = Date.now();
+  const sensors = db.prepare(`
+    SELECT s.*, p.id as plant_id, p.name as plant_name
+    FROM sensors s JOIN plants p ON p.sensor_id = s.id
+    WHERE s.connected = 1 AND s.last_seen IS NOT NULL
+  `).all();
+
+  for (const s of sensors) {
+    if (now - new Date(s.last_seen).getTime() < OFFLINE_MS) continue;
+    db.prepare('UPDATE sensors SET connected = 0 WHERE id = ?').run(s.id);
+    broadcast('plant-updated', { id: s.plant_id });
+    const settings = getSettings();
+    if (settings.push) {
+      pushToAll({ title: `${s.plant_name}: Sensor offline`, body: `${s.plant_name}s Sensor meldet sich seit einer Weile nicht mehr.`, plantId: s.plant_id }).catch(() => {});
+    }
+  }
+}
 
 function clampDrift(value, delta, min, max, pad) {
   const next = value + delta;
@@ -53,6 +80,8 @@ function tick() {
       console.error('Simulator-Fehler fuer Sensor', p.sensor_id, err.message);
     }
   }
+
+  checkOffline();
 }
 
 let timer = null;
