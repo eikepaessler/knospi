@@ -16,6 +16,7 @@ import { baloo, sans } from '../theme/typography';
 // ein plausibles Platzhalter-Ergebnis aus dem lokalen Katalog - klar als
 // Demo gekennzeichnet, damit niemand ihn fuer echt haelt.
 function mockRecognize(plantTypes) {
+  if (!plantTypes.length) return null;
   const pick = plantTypes[Math.floor(Math.random() * plantTypes.length)];
   const confidence = 78 + Math.floor(Math.random() * 20);
   return { type: pick, confidence };
@@ -45,7 +46,13 @@ export function AddPlantScreen() {
     setPhotoUri(uri);
     setStep(1);
     setTimeout(() => {
-      setMatch(mockRecognize(plantTypes));
+      const recognized = mockRecognize(plantTypes);
+      if (!recognized) {
+        showToast('Pflanzenarten konnten nicht geladen werden. Bitte Verbindung prüfen und erneut versuchen.');
+        setStep(0);
+        return;
+      }
+      setMatch(recognized);
       setStep(2);
     }, 1800);
   }
