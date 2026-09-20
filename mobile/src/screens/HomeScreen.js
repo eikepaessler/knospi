@@ -1,18 +1,19 @@
-import { useMemo } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { Screen } from '../components/Screen';
 import { TopHeader } from '../components/Header';
-import { Card, SpeechBubble } from '../components/ui';
+import { Card, SpeechBubble, ActionPill } from '../components/ui';
 import { PlantAvatar } from '../components/PlantAvatar';
 import { useAppData } from '../context/AppDataContext';
-import { colors, roomColor, toneColor } from '../theme/colors';
+import { colors, toneColor } from '../theme/colors';
 import { radius, shadows } from '../theme/layout';
 import { baloo, sans } from '../theme/typography';
 import { homeHeadline, homeSubline, timeGreeting } from '../lib/greeting';
 
 const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+const METRIC_ORDER = ['soil', 'light', 'temp', 'humidity'];
 
 function WeekRow({ week }) {
   const today = new Date().toISOString().slice(0, 10);
@@ -47,37 +48,87 @@ function WeekRow({ week }) {
   );
 }
 
-function AttentionCard({ plant, onPress }) {
+function HeroCard({ plant, onPress }) {
+  const needsHelp = plant && plant.mood !== 'happy';
   return (
-    <Pressable onPress={onPress} style={[styles.attentionCard, shadows.lg]}>
-      <View style={styles.attentionStage}>
-        <SpeechBubble style={styles.attentionBubble} textStyle={{ fontSize: 12.5, lineHeight: 17 }}>{plant.says}</SpeechBubble>
-        <PlantAvatar kind={plant.kind} mood={plant.face} size={100} />
-      </View>
-      <Text style={styles.attentionName}>{plant.name}</Text>
-      <View style={styles.moodRow}>
-        <View style={[styles.dot, { backgroundColor: toneColor(plant.tone) }]} />
-        <Text style={[styles.moodText, { color: toneColor(plant.tone) }]}>{plant.moodLabel}</Text>
-      </View>
+    <Pressable onPress={onPress} style={[styles.heroCard, shadows.lg, { backgroundColor: needsHelp ? colors.soft2 : colors.acc2 }]}>
+      <SpeechBubble>{plant ? plant.says : 'Nichts zu tun. Wir winken dir nur mal zu.'}</SpeechBubble>
+      <PlantAvatar kind={plant?.kind || 'generic'} mood={plant ? plant.face : 'happy'} size={140} />
     </Pressable>
   );
 }
 
-function HappyTile({ plant, onPress }) {
-  const pct = Math.round((plant.bond / 5) * 100);
+function metricSummary(plant) {
+  const available = plant.metrics.filter((m) => m.status !== 'na');
+  const ok = available.filter((m) => m.status === 'ok');
+  const pct = available.length ? Math.round((ok.length / available.length) * 100) : null;
+  return { pct, availableCount: available.length, total: METRIC_ORDER.length };
+}
+
+function metricLine(m) {
+  if (m.status === 'ok') return { text: `${m.label} ok`, color: colors.ok };
+  if (m.status === 'na') return { text: `${m.label}: noch kein Sensorwert`, color: colors.mut };
+  return { text: `${m.label}: ${m.text}`, color: toneColor('warn') };
+}
+
+function PlantPage({ plant, width, onPress }) {
+  const { pct, availableCount, total } = metricSummary(plant);
+  const lines = plant.hasSensor
+    ? METRIC_ORDER.map((key) => plant.metrics.find((m) => m.key === key)).filter(Boolean).slice(0, 2).map(metricLine)
+    : [{ text: 'Noch kein Sensor gekoppelt', color: colors.mut }];
+
   return (
-    <Pressable onPress={onPress} style={[styles.happyTile, shadows.md]}>
-      <View style={styles.happyStage}>
-        <View style={styles.happyBadge}><Text style={styles.happyBadgeText}>{plant.moodLabel}</Text></View>
-        <PlantAvatar kind={plant.kind} mood="happy" size={80} />
+    <View style={{ width, paddingHorizontal: 20 }}>
+      <Pressable onPress={onPress} style={[styles.plantCard, shadows.md]}>
+        <View style={styles.plantStage}>
+          <View style={styles.plantBadge}>
+            <Text style={styles.plantBadgeText}>{pct != null ? `${pct}% · ${availableCount} von ${total}` : 'Kein Sensor'}</Text>
+          </View>
+          <PlantAvatar kind={plant.kind} mood={plant.hasSensor ? plant.face : 'happy'} size={100} />
+        </View>
+        <View style={{ paddingTop: 12 }}>
+          <Text style={styles.plantName}>{plant.name}</Text>
+          <Text style={styles.plantRoom}>{plant.room?.name || 'Kein Raum'}</Text>
+          <View style={styles.plantBarTrack}>
+            <View style={[styles.plantBarFill, { width: `${pct ?? 0}%` }]} />
+          </View>
+          {lines.map((l, i) => (
+            <Text key={i} style={[styles.plantLine, { color: l.color }]}>{l.text}</Text>
+          ))}
+        </View>
+      </Pressable>
+    </View>
+  );
+}
+
+function AllPlantsCarousel({ plants, onPressPlant }) {
+  const { width } = useWindowDimensions();
+  const [index, setIndex] = useState(0);
+
+  function onScrollEnd(e) {
+    const i = Math.round(e.nativeEvent.contentOffset.x / width);
+    setIndex(Math.max(0, Math.min(plants.length - 1, i)));
+  }
+
+  return (
+    <View style={{ marginBottom: 22 }}>
+      <View style={[styles.roomHeader, { paddingHorizontal: 20 }]}>
+        <Text style={styles.roomTitle}>Alle Pflanzen</Text>
+        <Text style={styles.roomCount}>{index + 1} von {plants.length}</Text>
       </View>
-      <View style={{ paddingTop: 10 }}>
-        <Text style={styles.happyName} numberOfLines={1}>{plant.name}</Text>
-        <Text style={styles.happyWhere} numberOfLines={1}>{plant.room?.name}</Text>
-        <View style={styles.happyBarTrack}><View style={[styles.happyBarFill, { width: `${pct}%` }]} /></View>
-        <Text style={styles.happyStatus}>Bindung {plant.bond}/5</Text>
+      <View style={{ marginHorizontal: -20 }}>
+        <ScrollView
+          horizontal pagingEnabled showsHorizontalScrollIndicator={false}
+          onMomentumScrollEnd={onScrollEnd}
+          snapToInterval={width}
+          decelerationRate="fast"
+        >
+          {plants.map((p) => (
+            <PlantPage key={p.id} plant={p} width={width} onPress={() => onPressPlant(p)} />
+          ))}
+        </ScrollView>
       </View>
-    </Pressable>
+    </View>
   );
 }
 
@@ -87,19 +138,30 @@ export function HomeScreen() {
 
   const withSensor = plants.filter((p) => p.hasSensor);
   const attention = withSensor.filter((p) => p.mood !== 'happy');
-  const happy = withSensor.filter((p) => p.mood === 'happy');
-  const noSensor = plants.filter((p) => !p.hasSensor);
+  const roomCount = new Set(plants.map((p) => p.room?.id)).size;
 
-  const load = useMemo(() => plants.map((p) => ({
+  const load = plants.map((p) => ({
     id: p.id,
     color: !p.hasSensor ? 'rgba(29,36,24,0.12)' : p.mood !== 'happy' ? 'rgba(192,86,74,0.55)' : 'rgba(60,122,46,0.35)'
-  })), [plants]);
+  }));
 
-  const roomsWithAttention = rooms
-    .map((r) => ({ room: r, plants: attention.filter((p) => p.room?.id === r.id) }))
-    .filter((g) => g.plants.length > 0);
+  const goToPlant = (p) => navigation.navigate('PlantDetail', { id: p.id });
 
-  const roomCount = new Set(plants.map((p) => p.room?.id)).size;
+  if (plants.length === 0) {
+    return (
+      <Screen>
+        <TopHeader />
+        <Text style={styles.greetLine1}>{timeGreeting()}</Text>
+        <Text style={styles.greetLine2}>Willkommen bei Knospi.</Text>
+        <Text style={styles.subline}>Leg deine erste Pflanze an, dann kümmern wir uns gemeinsam um sie.</Text>
+        <View style={[styles.wavingCard, shadows.lg]}>
+          <SpeechBubble>Hallo! Ich warte noch auf meine erste Mitbewohnerin.</SpeechBubble>
+          <PlantAvatar kind="generic" mood="happy" size={140} />
+        </View>
+        <ActionPill label="Erste Pflanze anlegen" onPress={() => navigation.navigate('AddPlant')} />
+      </Screen>
+    );
+  }
 
   return (
     <Screen>
@@ -107,7 +169,7 @@ export function HomeScreen() {
       <Text style={styles.greetLine1}>{timeGreeting()}</Text>
       <Text style={styles.greetLine2}>{homeHeadline(attention.length)}</Text>
       <Text style={styles.subline}>
-        {homeSubline({ needCount: attention.length, roomCount, happyCount: happy.length })}
+        {homeSubline({ needCount: attention.length, roomCount, happyCount: withSensor.length - attention.length })}
       </Text>
 
       <View style={styles.loadBarTrack}>
@@ -122,55 +184,11 @@ export function HomeScreen() {
         </Text>
       </View>
 
+      <HeroCard plant={attention[0] || null} onPress={() => goToPlant(attention[0] || plants[0])} />
+
+      <AllPlantsCarousel plants={plants} onPressPlant={goToPlant} />
+
       {week.length > 0 && <WeekRow week={week} />}
-
-      {roomsWithAttention.map(({ room, plants: list }) => (
-        <View key={room.id} style={styles.roomGroup}>
-          <View style={styles.roomHeader}>
-            <View style={[styles.roomDot, { backgroundColor: roomColor(room.id) }]} />
-            <Text style={styles.roomTitle}>{room.name}</Text>
-            <Text style={styles.roomCount}>{list.length}</Text>
-          </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingRight: 20 }}>
-            {list.map((p) => (
-              <AttentionCard key={p.id} plant={p} onPress={() => navigation.navigate('PlantDetail', { id: p.id })} />
-            ))}
-          </ScrollView>
-        </View>
-      ))}
-
-      {attention.length === 0 && withSensor.length > 0 && (
-        <View style={[styles.wavingCard, shadows.lg]}>
-          <SpeechBubble>Nichts zu tun. Wir winken dir nur mal zu.</SpeechBubble>
-          <PlantAvatar kind={happy[0]?.kind || 'generic'} mood="happy" size={140} />
-        </View>
-      )}
-
-      {happy.length > 0 && (
-        <View style={styles.softSection}>
-          <Text style={styles.softTitle}>Denen geht es gut</Text>
-          <View style={styles.happyGrid}>
-            {happy.map((p) => (
-              <HappyTile key={p.id} plant={p} onPress={() => navigation.navigate('PlantDetail', { id: p.id })} />
-            ))}
-          </View>
-        </View>
-      )}
-
-      {noSensor.length > 0 && (
-        <View style={{ marginTop: 22 }}>
-          <Text style={styles.softTitleDark}>Ohne Sensor — noch keine Diagnose</Text>
-          {noSensor.map((p) => (
-            <Pressable key={p.id} onPress={() => navigation.navigate('PlantDetail', { id: p.id })} style={styles.noSensorRow}>
-              <PlantAvatar kind={p.kind} mood="happy" size={44} sway={false} />
-              <View style={{ flex: 1 }}>
-                <Text style={styles.noSensorName}>{p.name}</Text>
-                <Text style={styles.noSensorRoom}>{p.room?.name}</Text>
-              </View>
-            </Pressable>
-          ))}
-        </View>
-      )}
     </Screen>
   );
 }
@@ -188,38 +206,25 @@ const styles = StyleSheet.create({
   weekDay: { alignItems: 'center', gap: 6 },
   weekCircle: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   weekLabel: { ...sans(600, 11, { color: colors.mut }) },
-  roomGroup: { marginBottom: 22 },
-  roomHeader: { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 10 },
-  roomDot: { width: 10, height: 10, borderRadius: 3 },
+  roomHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 },
   roomTitle: { ...sans(800, 18, { color: colors.ink, letterSpacing: -0.4 }) },
   roomCount: { ...sans(700, 13, { color: colors.mut }) },
-  attentionCard: { width: 200, backgroundColor: colors.card, borderRadius: radius.xl, padding: 10, paddingBottom: 14 },
-  attentionStage: {
+  heroCard: {
+    borderRadius: radius.xxl, padding: 20, alignItems: 'center', gap: 14, marginBottom: 22
+  },
+  wavingCard: {
+    borderRadius: radius.xxl, backgroundColor: colors.acc2, padding: 20, alignItems: 'center', gap: 14, marginBottom: 20
+  },
+  plantCard: { backgroundColor: colors.card, borderRadius: radius.xl, padding: 14 },
+  plantStage: {
     borderRadius: radius.lg, backgroundColor: colors.acc2, minHeight: 190,
     alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 6, overflow: 'hidden'
   },
-  attentionBubble: { position: 'absolute', top: 10, left: 10, right: 10, maxWidth: undefined },
-  attentionName: { ...sans(700, 16, { color: colors.ink, marginTop: 10, letterSpacing: -0.2 }) },
-  moodRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 3 },
-  dot: { width: 7, height: 7, borderRadius: 3 },
-  moodText: { ...sans(700, 12.5) },
-  wavingCard: {
-    borderRadius: radius.xxl, backgroundColor: colors.acc2, padding: 20, alignItems: 'center', gap: 14, marginBottom: 8
-  },
-  softSection: { marginHorizontal: -20, marginTop: 22, paddingHorizontal: 20, paddingVertical: 20, backgroundColor: colors.soft, borderTopLeftRadius: radius.xxl, borderTopRightRadius: radius.xxl },
-  softTitle: { ...sans(800, 18, { color: colors.ink, letterSpacing: -0.4, marginBottom: 12 }) },
-  softTitleDark: { ...sans(800, 13, { color: colors.mut, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }) },
-  happyGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  happyTile: { width: '47%', backgroundColor: colors.card, borderRadius: radius.lg, padding: 9, paddingBottom: 13 },
-  happyStage: { borderRadius: radius.md, backgroundColor: colors.soft2, height: 110, alignItems: 'center', justifyContent: 'flex-end' },
-  happyBadge: { position: 'absolute', top: 8, left: 8, backgroundColor: colors.acc, borderRadius: radius.pill, paddingHorizontal: 9, paddingVertical: 3 },
-  happyBadgeText: { ...sans(800, 10.5, { color: '#fff' }) },
-  happyName: { ...sans(700, 15, { color: colors.ink }) },
-  happyWhere: { ...sans(600, 11.5, { color: colors.mut, marginBottom: 7 }) },
-  happyBarTrack: { height: 5, borderRadius: 99, backgroundColor: 'rgba(29,36,24,0.09)', overflow: 'hidden' },
-  happyBarFill: { height: '100%', backgroundColor: colors.acc, borderRadius: 99 },
-  happyStatus: { ...sans(700, 11.5, { color: colors.acc, marginTop: 6 }) },
-  noSensorRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
-  noSensorName: { ...sans(700, 14) },
-  noSensorRoom: { ...sans(600, 12, { color: colors.mut }) }
+  plantBadge: { position: 'absolute', top: 10, left: 10, backgroundColor: colors.ink, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 5 },
+  plantBadgeText: { ...sans(800, 11, { color: colors.bg }) },
+  plantName: { ...baloo(700, 22, { color: colors.ink }) },
+  plantRoom: { ...sans(600, 13, { color: colors.mut, marginBottom: 8 }) },
+  plantBarTrack: { height: 6, borderRadius: 99, backgroundColor: 'rgba(29,36,24,0.09)', overflow: 'hidden', marginBottom: 10 },
+  plantBarFill: { height: '100%', backgroundColor: colors.acc, borderRadius: 99 },
+  plantLine: { ...sans(700, 13.5, { marginBottom: 2 }) }
 });

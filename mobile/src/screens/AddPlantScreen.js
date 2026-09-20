@@ -107,6 +107,10 @@ export function AddPlantScreen() {
   if (step === 1) {
     return (
       <Screen scroll={false}>
+        <View style={styles.stepHeadRow}>
+          <View style={{ flex: 1 }} />
+          <CloseButton onPress={cancel} />
+        </View>
         <View style={styles.centerAll}>
           <ActivityIndicator size="large" color={colors.acc} />
           <Text style={styles.spinnerTitle}>Ich blättere nach …</Text>

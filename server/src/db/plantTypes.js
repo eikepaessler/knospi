@@ -134,6 +134,186 @@ export const PLANT_TYPES = [
     humidity: { min: 50, max: 85, hint: 'über 50 % — mag Bad- oder Küchenluft' }
   },
   {
+    id: 'fiddleleaf', name: 'Geigenfeige', latin: 'Ficus lyrata',
+    tip: 'Fester Platz, viel Licht, möglichst nicht umstellen.',
+    lore: 'Meine geigenförmigen Blätter werden über 30 cm groß. Veränderung mag ich gar nicht — einmal aufgestellt, bitte stehen lassen.',
+    roomHint: 'das Wohnzimmer: helles, festes Plätzchen ohne Zugluft',
+    soil: { min: 35, max: 60, hint: 'erst gießen, wenn die obere Erde trocken ist, Staunässe vermeiden', provisional: true },
+    light: { min: 2000, max: 18000, hint: 'hell, keine pralle Mittagssonne' },
+    temp: { min: 18, max: 27, hint: 'keine Zugluft, reagiert empfindlich auf Kälteschocks' },
+    humidity: { min: 40, max: 65, hint: 'normale Zimmerluft genügt' }
+  },
+  {
+    id: 'aloe', name: 'Aloe Vera', latin: 'Aloe vera',
+    tip: 'Sonnig und sehr sparsam gießen.',
+    lore: 'In meinen dicken Blättern speichere ich Wasser für trockene Zeiten — deshalb komme ich mit Vergesslichkeit gut klar.',
+    roomHint: 'das Fensterbrett: Südfenster, trocken',
+    soil: { min: 10, max: 30, hint: 'komplett durchtrocknen lassen zwischen den Gießgängen', provisional: true },
+    light: { min: 4000, max: 30000, hint: 'so viel Sonne wie möglich, Südfenster ist ideal' },
+    temp: { min: 15, max: 30, hint: 'verträgt Wärme gut, keine Kälte unter 10 °C' },
+    humidity: { min: 20, max: 50, hint: 'trockene Luft ist kein Problem' }
+  },
+  {
+    id: 'ivy', name: 'Efeu', latin: 'Hedera helix',
+    tip: 'Kühl und hell, regelmäßig aber mäßig gießen.',
+    lore: 'Ich klettere über Haftwurzeln an allem hoch, was still hält. Draußen ranke ich, drinnen hänge ich lieber.',
+    roomHint: 'ein kühles Treppenhaus oder heller Flur',
+    soil: { min: 35, max: 60, hint: 'gleichmäßig feucht, keine Staunässe', provisional: true },
+    light: { min: 1000, max: 12000, hint: 'hell bis halbschattig, keine pralle Sonne' },
+    temp: { min: 12, max: 22, hint: 'mag es eher kühl, keine trockene Heizungsluft' },
+    humidity: { min: 40, max: 65, hint: 'schätzt etwas Luftfeuchte' }
+  },
+  {
+    id: 'orchid', name: 'Orchidee', latin: 'Phalaenopsis',
+    tip: 'Alle 1–2 Wochen tauchen statt gießen, nie im Wasser stehen lassen.',
+    lore: 'Meine Wurzeln sind grün, weil sie mitfotosynthetisieren — deshalb wachse ich am liebsten im durchsichtigen Topf.',
+    roomHint: 'ein helles Fenster ohne direkte Sonne',
+    soil: { min: 20, max: 45, hint: 'Substrat antrocknen lassen, nie stauende Nässe', provisional: true },
+    light: { min: 1500, max: 12000, hint: 'hell, aber keine direkte Sonne' },
+    temp: { min: 18, max: 26, hint: 'gleichmäßig warm, keine Zugluft' },
+    humidity: { min: 45, max: 70, hint: 'mag spürbare Luftfeuchte' }
+  },
+  {
+    id: 'calathea', name: 'Korbmarante', latin: 'Calathea orbifolia',
+    tip: 'Weiches Wasser, hohe Luftfeuchte, keine direkte Sonne.',
+    lore: 'Abends klappe ich meine Blätter zusammen wie zum Gebet — daher nennt man meine Familie auch "Betende Pflanzen".',
+    roomHint: 'ein schattiges Bad oder eine feuchte Küchenecke',
+    soil: { min: 45, max: 70, hint: 'immer leicht feucht, nie austrocknen', provisional: true },
+    light: { min: 500, max: 6000, hint: 'Halbschatten, direkte Sonne verbrennt die Blätter' },
+    temp: { min: 18, max: 24, hint: 'keine Zugluft, keine Kälte unter 16 °C' },
+    humidity: { min: 55, max: 80, hint: 'über 55 % — Bad- oder Küchenluft passt gut' }
+  },
+  {
+    id: 'alocasia', name: 'Pfeilblatt', latin: 'Alocasia zebrina',
+    tip: 'Gleichmäßig feucht, viel Licht, hohe Luftfeuchte.',
+    lore: 'Meine gestreiften Stiele sehen aus wie Zebra-Beine — daher der Name. Etwas divenhaft, aber es lohnt sich.',
+    roomHint: 'ein helles Badezimmer oder Gewächshausfenster',
+    soil: { min: 40, max: 65, hint: 'gleichmäßig feucht, kurze Trockenphasen verzeiht sie nicht', provisional: true },
+    light: { min: 1500, max: 12000, hint: 'hell, keine direkte Mittagssonne' },
+    temp: { min: 20, max: 28, hint: 'mag es warm, keine Kälte unter 16 °C' },
+    humidity: { min: 55, max: 80, hint: 'braucht spürbar hohe Luftfeuchte' }
+  },
+  {
+    id: 'philodendron', name: 'Herzblatt-Philodendron', latin: 'Philodendron hederaceum',
+    tip: 'Halbschatten, mäßig gießen, rankt gerne.',
+    lore: 'Meine herzförmigen Blätter waren schon in den 1970ern in jedem Wohnzimmer zu finden — ein echter Klassiker.',
+    roomHint: 'ein Regal oder eine Hängeampel im Halbschatten',
+    soil: { min: 30, max: 55, hint: 'obere Erde antrocknen lassen', provisional: true },
+    light: { min: 800, max: 10000, hint: 'Halbschatten genügt völlig' },
+    temp: { min: 18, max: 27, hint: 'sehr tolerant, keine Zugluft' },
+    humidity: { min: 40, max: 65, hint: 'normale Zimmerluft reicht' }
+  },
+  {
+    id: 'yucca', name: 'Palmlilie', latin: 'Yucca elephantipes',
+    tip: 'Sonnig, sparsam gießen, verzeiht Vergesslichkeit.',
+    lore: 'Mein Stamm speichert Wasser wie ein kleiner Elefantenfuß — daher mein lateinischer Beiname.',
+    roomHint: 'ein sonniges Fenster mit etwas Platz',
+    soil: { min: 15, max: 35, hint: 'komplett antrocknen lassen zwischen den Gießgängen', provisional: true },
+    light: { min: 3000, max: 25000, hint: 'so viel Sonne wie möglich' },
+    temp: { min: 15, max: 28, hint: 'sehr robust, keine Kälte unter 10 °C' },
+    humidity: { min: 25, max: 55, hint: 'trockene Heizungsluft ist kein Problem' }
+  },
+  {
+    id: 'dracaena', name: 'Drachenbaum', latin: 'Dracaena fragrans',
+    tip: 'Hell bis halbschattig, mäßig gießen, kein fluoridhaltiges Wasser.',
+    lore: 'Braune Blattspitzen kommen bei mir fast immer von Fluorid im Leitungswasser — Regenwasser mag ich lieber.',
+    roomHint: 'ein helles Büro oder heller Flur',
+    soil: { min: 30, max: 55, hint: 'obere Erde antrocknen lassen, kalkarmes Wasser', provisional: true },
+    light: { min: 1000, max: 15000, hint: 'hell bis halbschattig, keine pralle Sonne' },
+    temp: { min: 18, max: 26, hint: 'keine Zugluft, keine Kälte unter 15 °C' },
+    humidity: { min: 35, max: 60, hint: 'normale Zimmerluft reicht' }
+  },
+  {
+    id: 'areca', name: 'Areca-Palme', latin: 'Dypsis lutescens',
+    tip: 'Hell, gleichmäßig feucht, hohe Luftfeuchte.',
+    lore: 'Ich gehöre zu den besten Luftreinigern unter Zimmerpflanzen — bewiesen sogar in einer NASA-Studie.',
+    roomHint: 'ein helles Wohnzimmer mit Platz nach oben',
+    soil: { min: 40, max: 65, hint: 'gleichmäßig feucht halten, keine Staunässe', provisional: true },
+    light: { min: 2000, max: 15000, hint: 'hell, keine direkte Mittagssonne' },
+    temp: { min: 18, max: 26, hint: 'keine Zugluft' },
+    humidity: { min: 45, max: 70, hint: 'mag spürbare Luftfeuchte' }
+  },
+  {
+    id: 'zz', name: 'Glücksfeder', latin: 'Zamioculcas zamiifolia',
+    tip: 'Fast unzerstörbar — lieber zu wenig als zu viel gießen.',
+    lore: 'In meinen Knollen im Boden speichere ich Wasser für Monate. Ich bin die Pflanze für alle, die viel vergessen.',
+    roomHint: 'ein dunklerer Flur oder eine Büroecke',
+    soil: { min: 10, max: 35, hint: 'komplett durchtrocknen lassen', provisional: true },
+    light: { min: 300, max: 15000, hint: 'von schattig bis hell — sehr tolerant' },
+    temp: { min: 15, max: 28, hint: 'sehr robust' },
+    humidity: { min: 25, max: 55, hint: 'trockene Luft ist kein Problem' }
+  },
+  {
+    id: 'fittonia', name: 'Mosaikpflanze', latin: 'Fittonia albivenis',
+    tip: 'Immer feucht halten, hohe Luftfeuchte, keine direkte Sonne.',
+    lore: 'Lasse ich die Erde austrocknen, lege ich mich sofort flach hin — gieße ich rechtzeitig, stehe ich binnen einer Stunde wieder auf.',
+    roomHint: 'ein Terrarium oder ein feuchtes Bad',
+    soil: { min: 55, max: 80, hint: 'nie austrocknen lassen', provisional: true },
+    light: { min: 500, max: 6000, hint: 'Halbschatten, keine direkte Sonne' },
+    temp: { min: 18, max: 25, hint: 'keine Zugluft' },
+    humidity: { min: 55, max: 85, hint: 'braucht hohe Luftfeuchte' }
+  },
+  {
+    id: 'peacelily', name: 'Einblatt', latin: 'Spathiphyllum wallisii',
+    tip: 'Gleichmäßig feucht, Halbschatten — zeigt Durst deutlich durch hängende Blätter.',
+    lore: 'Wenn ich Durst habe, lasse ich alle Blätter hängen — sobald ich Wasser bekomme, stehe ich binnen Stunden wieder aufrecht.',
+    roomHint: 'ein schattiges Bad oder ein Flur',
+    soil: { min: 45, max: 70, hint: 'gleichmäßig feucht halten', provisional: true },
+    light: { min: 500, max: 8000, hint: 'Halbschatten genügt gut' },
+    temp: { min: 18, max: 25, hint: 'keine Zugluft' },
+    humidity: { min: 45, max: 70, hint: 'mag spürbare Luftfeuchte' }
+  },
+  {
+    id: 'anthurium', name: 'Flamingoblume', latin: 'Anthurium andraeanum',
+    tip: 'Hell, mäßig gießen, hohe Luftfeuchte für lange Blüte.',
+    lore: 'Meine leuchtend rote "Blüte" ist eigentlich ein Hochblatt — die echte Blüte sitzt am gelben Kolben in der Mitte.',
+    roomHint: 'ein helles Fenster ohne direkte Sonne',
+    soil: { min: 35, max: 60, hint: 'obere Erde antrocknen lassen', provisional: true },
+    light: { min: 1000, max: 10000, hint: 'hell, keine direkte Sonne' },
+    temp: { min: 18, max: 27, hint: 'keine Zugluft' },
+    humidity: { min: 50, max: 75, hint: 'braucht spürbare Luftfeuchte' }
+  },
+  {
+    id: 'umbrella', name: 'Strahlenaralie', latin: 'Schefflera arboricola',
+    tip: 'Hell, mäßig gießen, verträgt gelegentliches Vergessen.',
+    lore: 'Meine Blätter wachsen wie die Speichen eines Regenschirms angeordnet — daher der englische Name "Umbrella Tree".',
+    roomHint: 'ein helles Wohnzimmer',
+    soil: { min: 30, max: 55, hint: 'obere Erde antrocknen lassen', provisional: true },
+    light: { min: 1500, max: 15000, hint: 'hell, keine pralle Mittagssonne' },
+    temp: { min: 16, max: 26, hint: 'keine Zugluft' },
+    humidity: { min: 35, max: 60, hint: 'normale Zimmerluft reicht' }
+  },
+  {
+    id: 'spiderplant', name: 'Grünlilie', latin: 'Chlorophytum comosum',
+    tip: 'Hell bis halbschattig, regelmäßig gießen, bildet viele Ableger.',
+    lore: 'An meinen langen Ausläufern bilde ich kleine Pflänzchen — jede davon lässt sich einfach abschneiden und bewurzeln.',
+    roomHint: 'ein helles Regal, ideal zum Aufhängen',
+    soil: { min: 35, max: 60, hint: 'regelmäßig gießen, kurze Trockenphasen verzeiht sie', provisional: true },
+    light: { min: 800, max: 15000, hint: 'hell bis halbschattig' },
+    temp: { min: 15, max: 24, hint: 'sehr robust' },
+    humidity: { min: 30, max: 60, hint: 'normale Zimmerluft reicht' }
+  },
+  {
+    id: 'jade', name: 'Geldbaum', latin: 'Crassula ovata',
+    tip: 'Sonnig, sehr sparsam gießen wie ein Kaktus.',
+    lore: 'Meine dicken, runden Blätter gelten in vielen Kulturen als Glücksbringer für Wohlstand.',
+    roomHint: 'ein sonniges Fensterbrett',
+    soil: { min: 10, max: 30, hint: 'komplett durchtrocknen lassen', provisional: true },
+    light: { min: 3000, max: 25000, hint: 'so viel Sonne wie möglich' },
+    temp: { min: 15, max: 27, hint: 'verträgt Wärme gut' },
+    humidity: { min: 20, max: 50, hint: 'trockene Luft ist kein Problem' }
+  },
+  {
+    id: 'chainheart', name: 'Herzchenkette', latin: 'Ceropegia woodii',
+    tip: 'Hell, sparsam gießen, hängt gerne.',
+    lore: 'An meinen dünnen Ranken wachsen kleine Knollen, aus denen sich ganz leicht neue Pflanzen ziehen lassen.',
+    roomHint: 'eine Hängeampel am hellen Fenster',
+    soil: { min: 15, max: 35, hint: 'antrocknen lassen zwischen den Gießgängen', provisional: true },
+    light: { min: 2000, max: 15000, hint: 'hell, verträgt auch etwas direkte Sonne' },
+    temp: { min: 15, max: 26, hint: 'keine Kälte unter 12 °C' },
+    humidity: { min: 25, max: 55, hint: 'trockene Luft ist kein Problem' }
+  },
+  {
     id: 'generic', name: 'Unbekannte Art', latin: 'noch nicht bestimmt',
     tip: 'Wir lernen uns eben kennen. Beobachte mich die erste Woche genau.',
     lore: 'Zu meiner Art steht noch nicht viel in der Datenbank. Wir lernen uns eben kennen.',

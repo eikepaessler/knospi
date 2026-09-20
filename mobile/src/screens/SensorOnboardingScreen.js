@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { ActionPill } from '../components/ui';
+import { CloseButton } from '../components/Header';
 import { colors } from '../theme/colors';
 import { radius, shadows } from '../theme/layout';
 import { baloo, sans } from '../theme/typography';
@@ -41,10 +42,13 @@ export function SensorOnboardingScreen() {
 
   return (
     <View style={[styles.wrap, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 20 }]}>
-      <View style={styles.progressRow}>
-        {[0, 1, 2].map((i) => (
-          <View key={i} style={[styles.progressSeg, { backgroundColor: i <= step ? colors.acc : colors.line }]} />
-        ))}
+      <View style={styles.headRow}>
+        <View style={styles.progressRow}>
+          {[0, 1, 2].map((i) => (
+            <View key={i} style={[styles.progressSeg, { backgroundColor: i <= step ? colors.acc : colors.line }]} />
+          ))}
+        </View>
+        <CloseButton onPress={() => navigation.goBack()} />
       </View>
 
       <View style={styles.content}>
@@ -102,7 +106,8 @@ export function SensorOnboardingScreen() {
 
 const styles = StyleSheet.create({
   wrap: { flex: 1, backgroundColor: colors.bg, paddingHorizontal: 24 },
-  progressRow: { flexDirection: 'row', gap: 6, marginBottom: 26 },
+  headRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 26 },
+  progressRow: { flex: 1, flexDirection: 'row', gap: 6 },
   progressSeg: { flex: 1, height: 5, borderRadius: 99 },
   content: { flex: 1, alignItems: 'center', textAlign: 'center', gap: 18, paddingTop: 20 },
   illoWrap: { width: 190, height: 190, borderRadius: 95, backgroundColor: colors.soft, alignItems: 'center', justifyContent: 'center' },

@@ -6,19 +6,20 @@ import { colors } from '../theme/colors';
 import { radius } from '../theme/layout';
 import { sans } from '../theme/typography';
 
-const ICONS = {
-  home: (c) => <Path d="M4 12l8-7 8 7M6 10v9h12v-9" stroke={c} strokeWidth={2} fill="none" strokeLinecap="round" strokeLinejoin="round" />,
-  rooms: (c) => <Path d="M4 5h7v7H4zM13 5h7v4h-7zM13 12h7v7h-7zM4 15h7v4H4z" stroke={c} strokeWidth={1.8} fill="none" strokeLinejoin="round" />,
-  doctor: (c) => <Path d="M12 3v6M9 6h6M6 12c0 5 3.5 8 6 9 2.5-1 6-4 6-9a4 4 0 00-6-3.4A4 4 0 006 12z" stroke={c} strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" />,
-  gallery: (c) => <Path d="M4 5h16v14H4zM4 15l4-4 3 3 5-6 4 5" stroke={c} strokeWidth={1.8} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-};
-
 const TABS = [
-  { key: 'Home', label: 'Zuhause', icon: 'home' },
-  { key: 'Rooms', label: 'Räume', icon: 'rooms' },
-  { key: 'Doctor', label: 'Doktor', icon: 'doctor' },
-  { key: 'Gallery', label: 'Galerie', icon: 'gallery' }
+  { key: 'Home', label: 'Zuhause' },
+  { key: 'Rooms', label: 'Räume' },
+  { key: 'Doctor', label: 'Doktor' }
 ];
+
+function LeafIcon({ color }) {
+  return (
+    <Svg width={13} height={13} viewBox="0 0 24 24">
+      <Path d="M20 4C10 4 4 10 4 20c10 0 16-6 16-16z" fill={color} />
+      <Path d="M6 18c4-4 8-8 12-12" stroke={colors.ink} strokeWidth={1.4} strokeLinecap="round" opacity={0.25} />
+    </Svg>
+  );
+}
 
 export function TabBar({ state, navigation }) {
   const insets = useSafeAreaInsets();
@@ -34,7 +35,7 @@ export function TabBar({ state, navigation }) {
             const color = active ? colors.ink : 'rgba(246,245,239,0.78)';
             return (
               <Pressable key={t.key} onPress={() => navigation.navigate(t.key)} style={[styles.tab, active && styles.tabActive]}>
-                <Svg width={20} height={20} viewBox="0 0 24 24">{ICONS[t.icon](color)}</Svg>
+                {active ? <LeafIcon color={colors.acc} /> : <View style={styles.dot} />}
                 <Text style={[styles.label, { color }]}>{t.label}</Text>
               </Pressable>
             );
@@ -54,9 +55,10 @@ const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 0, right: 0, bottom: 0, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingTop: 10, paddingBottom: 6 },
   pill: { flex: 1, flexDirection: 'row', backgroundColor: colors.ink, borderRadius: radius.pill, padding: 5, gap: 2 },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 9, borderRadius: radius.pill },
+  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: radius.pill },
   tabActive: { backgroundColor: colors.bg },
-  label: { ...sans(800, 10.5) },
+  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: 'rgba(246,245,239,0.78)' },
+  label: { ...sans(800, 12.5) },
   fab: {
     width: 52, height: 52, borderRadius: radius.pill, backgroundColor: colors.ink,
     alignItems: 'center', justifyContent: 'center'

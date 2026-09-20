@@ -39,8 +39,8 @@ Expo-Go-App auf einem echten Gerät.
 
 ```bash
 npm install                 # installiert Server- und Mobile-Abhängigkeiten (npm workspaces)
-npm run seed                 # legt die SQLite-DB an, befüllt sie mit 14 Pflanzenarten,
-                              # 4 Räumen und 22 Beispielpflanzen (einige mit Problemen)
+npm run seed                 # legt die SQLite-DB an, befüllt sie mit 32 Pflanzenarten
+                              # und 4 Räumen - keine Beispielpflanzen, die legst du selbst an
 npm run dev                  # startet Backend (Port 4000) und Expo Metro Bundler parallel
 ```
 
@@ -65,7 +65,7 @@ anders als im Browser).
 
 ## Pflanzen-Datenbank
 
-`server/src/db/plantTypes.js` enthält 14 Pflanzenarten mit Pflegetipp (`tip`),
+`server/src/db/plantTypes.js` enthält 32 Pflanzenarten mit Pflegetipp (`tip`),
 Artenfakt (`lore`), Standort-Empfehlung (`roomHint`) und je Metrik einem
 Idealbereich **plus** einem kurzen Hinweistext (genau wie im Briefing-Beispiel
 *Begonia maculata*):
