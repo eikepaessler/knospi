@@ -44,11 +44,15 @@ function clampDrift(value, delta, min, max, pad) {
 }
 
 function tick() {
+  // Pflanzen mit einem echten Sensor (sensors.real_token gesetzt) werden
+  // vom eigenen Polling in realSensor.js gespeist, nicht vom Simulator.
   const plants = db.prepare(`
     SELECT p.*, t.soil_min, t.soil_max, t.light_min, t.light_max,
            t.temp_min, t.temp_max, t.humidity_min, t.humidity_max
-    FROM plants p JOIN plant_types t ON t.id = p.type_id
-    WHERE p.sensor_id IS NOT NULL
+    FROM plants p
+    JOIN plant_types t ON t.id = p.type_id
+    JOIN sensors s ON s.id = p.sensor_id
+    WHERE p.sensor_id IS NOT NULL AND s.real_token IS NULL
   `).all();
 
   for (const p of plants) {

@@ -100,22 +100,30 @@ Siehe `server/src/services/comparator.js` — 1:1 nach Briefing:
 
 ## Sensoren: Simulation und echtes Bluetooth
 
-**Aktuell:** `server/src/services/simulator.js` erzeugt alle 20 Sekunden neue
-Messwerte für jede Pflanze mit zugewiesenem Sensor und speist sie über
-dieselbe Funktion (`applyReading`) ein, die auch echte Hardware nutzen würde.
+**Simulator:** `server/src/services/simulator.js` erzeugt alle 20 Sekunden neue
+Messwerte für jede Pflanze mit simuliertem Sensor und speist sie über
+dieselbe Funktion (`applyReading`) ein, die auch echte Hardware nutzt. Er
+lässt Pflanzen mit einem echten Sensor (siehe unten) bewusst in Ruhe.
 Ein separater Watchdog markiert Sensoren als offline, wenn länger kein Reading
 kam (Push-Anlass „Sensor offline").
 
-**Echter Sensor-Endpunkt** (aus dem Briefing, noch nicht angebunden):
-`GET https://sensors.duus.digital/<device-token>/tail?n=<count>` liefert
-Klima-/Licht-/Rohwerte. Sobald ein device-token vorliegt, ersetzt ein Poller
-gegen diesen Endpunkt den Simulator — die Vergleichslogik und Benachrichtigungen
-bleiben unverändert, da beide über dieselbe `applyReading()`-Funktion laufen.
+**Echter Sensor-Endpunkt** (`server/src/services/realSensor.js`): pollt alle
+60 Sekunden `GET https://sensors.duus.digital/<token>/tail?n=<n>` und mappt
+die Antwort (`{ messages: [{ ts, json: { device_id, soil: { percent },
+light: { visible }, climate: { temperature_c, humidity_pct } } }] }`) auf
+dieselbe `applyReading()`-Pipeline wie der Simulator — Vergleichslogik und
+Benachrichtigungen bleiben unverändert. Duplikate werden über
+`sensors.last_reading_ts` ausgefiltert. Die Licht-Rohwerte (`visible`) sind
+unkalibriert (keine echte Lux-Messung), daher wie bei der Erdfeuchte mit
+Vorbehalt zu lesen, bis reale Schwellen ermittelt sind.
 
-**Sensor-Pairing in der App:** `POST /api/plants/:id/sensor` (das
-Sensor-Onboarding in der App ruft das nach den drei Schritten auf). Für echte
-BLE-Kopplung braucht es zusätzlich die GATT-Service-/Characteristic-UUIDs des
-gewählten Sensor-Modells — noch offen, siehe Nicht-Ziele unten.
+**Sensor-Pairing in der App:** `POST /api/plants/:id/sensor` für simulierte
+Sensoren (drei-Schritte-Onboarding), `POST /api/plants/:id/sensor/real` mit
+`{ input }` (voller Link oder nur der Token) für einen echten Sensor — in der
+App über „Ich habe schon einen Sensor-Link" im Sensor-Onboarding erreichbar.
+Für echte BLE-Kopplung (statt HTTP-Polling) braucht es zusätzlich die
+GATT-Service-/Characteristic-UUIDs des gewählten Sensor-Modells — noch offen,
+siehe Nicht-Ziele unten.
 
 ## Bilderkennung (Scan-Flow & Pflanzen-Doktor)
 
@@ -162,7 +170,7 @@ Postfach, keine weiteren Shop-Artikel außer Sensoren und Bundles.
 ## Offene Punkte
 
 - Echte Bild-/Krankheitserkennung (siehe oben)
-- Echter Sensor-Endpunkt statt Simulator (siehe oben)
+- Licht-Rohwerte vom echten Sensor gegen echte Lux-Werte kalibrieren
 - Wochenrückblick-Versand als Cron-Job
 - Verlaufs-Charts über einen Tag/Monat hinaus (aktuell: Sparkline der letzten ~30 Readings)
 - App-Icon/Splash-Assets sind Platzhalter aus dem Expo-Template

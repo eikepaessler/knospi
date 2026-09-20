@@ -31,12 +31,19 @@ CREATE TABLE IF NOT EXISTS plant_types (
   humidity_hint     TEXT NOT NULL
 );
 
+-- real_token/real_device_id sind gesetzt, wenn dieser Sensor ein echtes
+-- Geraet ist (sensors.duus.digital), statt vom Simulator gespeist zu
+-- werden. last_reading_ts merkt sich den zuletzt verarbeiteten Messwert
+-- des Geraets, um beim Polling keine Duplikate einzuspielen.
 CREATE TABLE IF NOT EXISTS sensors (
-  id         TEXT PRIMARY KEY,
-  plant_id   TEXT UNIQUE REFERENCES plants(id) ON DELETE SET NULL,
-  battery    INTEGER NOT NULL DEFAULT 100,
-  connected  INTEGER NOT NULL DEFAULT 1,
-  last_seen  TEXT
+  id              TEXT PRIMARY KEY,
+  plant_id        TEXT UNIQUE REFERENCES plants(id) ON DELETE SET NULL,
+  battery         INTEGER NOT NULL DEFAULT 100,
+  connected       INTEGER NOT NULL DEFAULT 1,
+  last_seen       TEXT,
+  real_token      TEXT,
+  real_device_id  TEXT,
+  last_reading_ts TEXT
 );
 
 CREATE TABLE IF NOT EXISTS plants (

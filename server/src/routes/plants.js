@@ -3,6 +3,7 @@ import { db } from '../db/index.js';
 import { nanoid } from '../utils/nanoid.js';
 import { getAllPlantsDecorated, getPlantDecorated, getPlantRow } from '../services/plants.js';
 import { waterPlant, fixPlant } from '../services/readings.js';
+import { pairRealSensor } from '../services/realSensor.js';
 import { broadcast } from '../services/events.js';
 
 export const plantsRouter = Router();
@@ -89,6 +90,20 @@ plantsRouter.post('/:id/sensor', (req, res) => {
   const plant = getPlantDecorated(row.id);
   broadcast('plant-updated', plant);
   res.json(plant);
+});
+
+// Kopplung mit einem echten Sensor (sensors.duus.digital) statt einer
+// simulierten Kennung: body { input } nimmt sowohl den vollen Link als
+// auch nur den Token an.
+plantsRouter.post('/:id/sensor/real', async (req, res) => {
+  if (!getPlantRow(req.params.id)) return res.status(404).json({ error: 'Pflanze nicht gefunden' });
+  try {
+    const plant = await pairRealSensor(req.params.id, req.body.input);
+    broadcast('plant-updated', plant);
+    res.json(plant);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
 });
 
 plantsRouter.delete('/:id/sensor', (req, res) => {

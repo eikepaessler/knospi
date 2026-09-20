@@ -18,6 +18,7 @@ import { stickersRouter } from './routes/stickers.js';
 import { weekRouter } from './routes/week.js';
 import { sseHandler } from './services/events.js';
 import { startSimulator } from './services/simulator.js';
+import { startRealSensorPoller } from './services/realSensor.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -60,4 +61,5 @@ const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`Knospi-Server läuft auf http://localhost:${PORT}`);
   startSimulator();
+  startRealSensorPoller();
 });

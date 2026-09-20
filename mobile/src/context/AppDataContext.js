@@ -82,6 +82,13 @@ export function AppDataProvider({ children }) {
     return plant;
   }, [applyPlant, showToast]);
 
+  const pairRealSensor = useCallback(async (id, input) => {
+    const plant = await api.pairRealSensor(id, input);
+    applyPlant(plant);
+    showToast(`${plant.name} ist mit dem echten Sensor verbunden.`);
+    return plant;
+  }, [applyPlant, showToast]);
+
   const removeSensor = useCallback(async (id) => {
     const plant = await api.removeSensor(id);
     applyPlant(plant);
@@ -146,11 +153,11 @@ export function AppDataProvider({ children }) {
 
   const value = useMemo(() => ({
     plants, rooms, plantTypes, notifications, settings, stickers, week, loading, toast, reward,
-    showToast, refreshAll, fixPlant, waterPlant, assignSensor, removeSensor,
+    showToast, refreshAll, fixPlant, waterPlant, assignSensor, pairRealSensor, removeSensor,
     addPlant, removePlant, addRoom, renameRoom, addPhoto, addDiagnosis, healDiagnosis,
     markNotificationRead, markAllRead, updateSettings
   }), [plants, rooms, plantTypes, notifications, settings, stickers, week, loading, toast, reward,
-      showToast, refreshAll, fixPlant, waterPlant, assignSensor, removeSensor,
+      showToast, refreshAll, fixPlant, waterPlant, assignSensor, pairRealSensor, removeSensor,
       addPlant, removePlant, addRoom, renameRoom, addPhoto, addDiagnosis, healDiagnosis,
       markNotificationRead, markAllRead, updateSettings]);
 

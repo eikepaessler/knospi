@@ -27,6 +27,7 @@ export const api = {
   updatePlant: (id, patch) => request(`/plants/${id}`, { method: 'PATCH', body: JSON.stringify(patch) }),
   deletePlant: (id) => request(`/plants/${id}`, { method: 'DELETE' }),
   assignSensor: (id, sensorId) => request(`/plants/${id}/sensor`, { method: 'POST', body: JSON.stringify({ sensorId }) }),
+  pairRealSensor: (id, input) => request(`/plants/${id}/sensor/real`, { method: 'POST', body: JSON.stringify({ input }) }),
   removeSensor: (id) => request(`/plants/${id}/sensor`, { method: 'DELETE' }),
   water: (id) => request(`/plants/${id}/water`, { method: 'POST' }),
   fix: (id) => request(`/plants/${id}/fix`, { method: 'POST' }),
