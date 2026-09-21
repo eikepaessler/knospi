@@ -54,6 +54,22 @@ function jitter(i, amp) {
   return Math.sin(i * 2.61 + 0.7) * amp;
 }
 
+// Echte Einbuchtungen in der Blattkontur (statt nur aufgemalter Linien) -
+// fuer gefiederte/eingeschnittene Blaetter wie Monstera. Baut eine Seite
+// von der Basis zur Spitze mit abwechselnd aussen/innen liegenden Punkten
+// und spiegelt sie fuer die andere Seite.
+function scallopedLeafPath(rx, ry, notches) {
+  const pts = [];
+  for (let k = 0; k < notches; k++) {
+    const t0 = k / notches, t1 = (k + 0.5) / notches;
+    pts.push([rx * (1 - t0 * 0.3), ry - t0 * 1.75 * ry]);
+    pts.push([rx * 0.48 * (1 - t1 * 0.3), ry - t1 * 1.75 * ry]);
+  }
+  const right = pts.map(([x, y]) => `L ${x} ${y}`).join(' ');
+  const left = pts.slice().reverse().map(([x, y]) => `L ${-x} ${y}`).join(' ');
+  return `M 0 ${ry} ${right} L 0 ${-ry} ${left} Z`;
+}
+
 function Leaf({ s, angle, w, h, stemLen, sp, i }) {
   const rx = w / 2, ry = h / 2;
   const lineW = Math.max(0.7, s * 0.008);
@@ -86,15 +102,6 @@ function Leaf({ s, angle, w, h, stemLen, sp, i }) {
       <Path key={'sw' + dir} d={`M 0 ${ry * 0.7} L ${dir * rx * 0.35} ${-ry * 0.7}`} stroke={INK} strokeWidth={lineW * 0.7} strokeLinecap="round" opacity={0.7} />
     ));
   }
-  if (sp.slits) {
-    for (let k = 0; k < sp.slits; k++) {
-      const y = -ry * 0.5 + k * (ry * 0.5);
-      [-1, 1].forEach((dir) => inner.push(
-        <Line key={'sl' + k + dir} x1={dir * rx * 0.95} y1={y} x2={dir * rx * 0.35} y2={y + ry * 0.16}
-          stroke={INK} strokeWidth={lineW} strokeLinecap="round" />
-      ));
-    }
-  }
   if (sp.comb) {
     // Kurz und duenn halten - zu lange/zu viele Fiederadern auf mehreren
     // ueberlappenden Blaettern liessen die Pflanze "zerstueckelt" wirken.
@@ -126,10 +133,12 @@ function Leaf({ s, angle, w, h, stemLen, sp, i }) {
     ? <Circle cx={jitter(i, 0.04) * rx} cy={0} r={rx} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} />
     : sp.straight
       ? <Path d={`M ${-rx * 0.62} ${ry} Q ${-rx * (1 - asym)} ${ry * 0.1} 0 ${-ry} Q ${rx * (1 + asym)} ${ry * 0.1} ${rx * 0.62} ${ry} Z`} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round" />
-      : <Path
-          d={`M 0 ${ry} C ${-rx * (1.18 + asym)} ${ry * 0.4}, ${-rx * (0.82 + asym * 0.5)} ${-ry * 0.82}, ${tip} ${-ry} C ${rx * (0.82 - asym * 0.5)} ${-ry * 0.82}, ${rx * (1.18 - asym)} ${ry * 0.4}, 0 ${ry} Z`}
-          fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round"
-        />;
+      : sp.slits
+        ? <Path d={scallopedLeafPath(rx, ry, sp.slits)} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round" />
+        : <Path
+            d={`M 0 ${ry} C ${-rx * (1.18 + asym)} ${ry * 0.4}, ${-rx * (0.82 + asym * 0.5)} ${-ry * 0.82}, ${tip} ${-ry} C ${rx * (0.82 - asym * 0.5)} ${-ry * 0.82}, ${rx * (1.18 - asym)} ${ry * 0.4}, 0 ${ry} Z`}
+            fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round"
+          />;
 
   const stemBend = jitter(i + 7, 0.15) * (stemLen || 1);
 
@@ -208,18 +217,25 @@ function Cactus({ s }) {
     <Line key={i} x1={i % 2 ? bodyW * 0.42 : -bodyW * 0.42} y1={-bodyH * at} x2={i % 2 ? bodyW * 0.55 : -bodyW * 0.55} y2={-bodyH * at}
       stroke={INK} strokeWidth={lineW} strokeLinecap="round" />
   ));
+  // Arme setzen auf halber Koerperhoehe an der Seite an statt auf
+  // Bodenhoehe zu starten - sonst wirken sie vom Koerper abgeloest.
+  const armY = -bodyH * 0.4;
+  const armX = bodyW * 0.32;
   return (
     <G>
-      <G transform={`translate(${-s * 0.19} 0) rotate(-24)`}>
-        <Path d={`M 0 0 L 0 ${-s * 0.2}`} stroke={INK} strokeWidth={s * 0.085} strokeLinecap="round" />
-        <Path d={`M 0 0 L 0 ${-s * 0.2}`} stroke={PAPER} strokeWidth={s * 0.06} strokeLinecap="round" />
-      </G>
-      <G transform={`translate(${s * 0.19} 0) rotate(24)`}>
-        <Path d={`M 0 0 L 0 ${-s * 0.17}`} stroke={INK} strokeWidth={s * 0.085} strokeLinecap="round" />
-        <Path d={`M 0 0 L 0 ${-s * 0.17}`} stroke={PAPER} strokeWidth={s * 0.06} strokeLinecap="round" />
-      </G>
+      {/* Koerper zuerst zeichnen, Arme danach obendrauf - sonst deckt die
+          deckende Koerperfuellung die Armbasis ab und die Arme wirken
+          abgeloest statt angewachsen. */}
       <G transform={`translate(0 ${-bodyH / 2})`}>
         <Ellipse cx={0} cy={0} rx={bodyW / 2} ry={bodyH / 2} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} />
+      </G>
+      <G transform={`translate(${-armX} ${armY}) rotate(-32)`}>
+        <Path d={`M 0 0 L 0 ${-s * 0.17}`} stroke={INK} strokeWidth={s * 0.075} strokeLinecap="round" />
+        <Path d={`M 0 0 L 0 ${-s * 0.17}`} stroke={PAPER} strokeWidth={s * 0.05} strokeLinecap="round" />
+      </G>
+      <G transform={`translate(${armX} ${armY * 0.75}) rotate(30)`}>
+        <Path d={`M 0 0 L 0 ${-s * 0.14}`} stroke={INK} strokeWidth={s * 0.075} strokeLinecap="round" />
+        <Path d={`M 0 0 L 0 ${-s * 0.14}`} stroke={PAPER} strokeWidth={s * 0.05} strokeLinecap="round" />
       </G>
       <G transform={`translate(0 ${-bodyH})`}>{ribs}{spines}</G>
     </G>
