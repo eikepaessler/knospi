@@ -54,23 +54,45 @@ function jitter(i, amp) {
   return Math.sin(i * 2.61 + 0.7) * amp;
 }
 
-// Grosslappiges, tief eingeschnittenes Blatt mit weichen Rundungen statt
-// spitzem Zickzack - fuer Fensterblatt-artige Arten wie Monstera. Fest
-// handgezeichnete Kurve (zwei runde Lappen je Seite), keine generische
-// Punktreihe - so bleibt die Silhouette vorhersehbar organisch.
-function scallopedLeafPath(rx, ry) {
+// Ovale Teilkontur aus vier Quadratic-Kurven - Baustein fuer die
+// Fenster-Locher im Monstera-Blatt.
+function ovalSub(cx, cy, rx, ry) {
   return [
-    `M 0 ${ry}`,
-    `Q ${rx * 1.05} ${ry * 0.65} ${rx * 0.92} ${ry * 0.05}`,
-    `Q ${rx * 0.55} ${-ry * 0.08} ${rx * 0.7} ${-ry * 0.4}`,
-    `Q ${rx * 1.0} ${-ry * 0.58} ${rx * 0.62} ${-ry * 0.88}`,
-    `Q ${rx * 0.32} ${-ry * 1.05} 0 ${-ry}`,
-    `Q ${-rx * 0.32} ${-ry * 1.05} ${-rx * 0.62} ${-ry * 0.88}`,
-    `Q ${-rx * 1.0} ${-ry * 0.58} ${-rx * 0.7} ${-ry * 0.4}`,
-    `Q ${-rx * 0.55} ${-ry * 0.08} ${-rx * 0.92} ${ry * 0.05}`,
-    `Q ${-rx * 1.05} ${ry * 0.65} 0 ${ry}`,
+    `M ${cx - rx} ${cy}`,
+    `Q ${cx - rx} ${cy - ry} ${cx} ${cy - ry}`,
+    `Q ${cx + rx} ${cy - ry} ${cx + rx} ${cy}`,
+    `Q ${cx + rx} ${cy + ry} ${cx} ${cy + ry}`,
+    `Q ${cx - rx} ${cy + ry} ${cx - rx} ${cy}`,
     'Z'
   ].join(' ');
+}
+
+// Fensterblatt-Kontur wie bei Monstera: herzfoermige Basis (leichte Kerbe
+// am Stielansatz), breite runde Lappen statt spitzem Zickzack, und echte
+// Locher im Blatt selbst - nicht nur Randeinschnitte. Die Locher sind ein
+// zweiter Teilpfad im selben <Path>, der per fillRule="evenodd" transparent
+// bleibt und dadurch zu jedem Hintergrund passt.
+function monsteraLeafPath(rx, ry) {
+  const outline = [
+    `M 0 ${ry * 0.88}`,
+    `Q ${rx * 0.22} ${ry * 1.08} ${rx * 0.48} ${ry * 0.88}`,
+    `Q ${rx * 1.08} ${ry * 0.6} ${rx * 0.88} ${ry * 0.02}`,
+    `Q ${rx * 0.5} ${-ry * 0.12} ${rx * 0.7} ${-ry * 0.45}`,
+    `Q ${rx * 1.0} ${-ry * 0.62} ${rx * 0.58} ${-ry * 0.9}`,
+    `Q ${rx * 0.3} ${-ry * 1.07} 0 ${-ry}`,
+    `Q ${-rx * 0.3} ${-ry * 1.07} ${-rx * 0.58} ${-ry * 0.9}`,
+    `Q ${-rx * 1.0} ${-ry * 0.62} ${-rx * 0.7} ${-ry * 0.45}`,
+    `Q ${-rx * 0.5} ${-ry * 0.12} ${-rx * 0.88} ${ry * 0.02}`,
+    `Q ${-rx * 1.08} ${ry * 0.6} ${-rx * 0.48} ${ry * 0.88}`,
+    `Q ${-rx * 0.22} ${ry * 1.08} 0 ${ry * 0.88}`,
+    'Z'
+  ].join(' ');
+  const holes = [
+    ovalSub(rx * 0.4, -ry * 0.12, rx * 0.16, ry * 0.26),
+    ovalSub(-rx * 0.4, ry * 0.22, rx * 0.14, ry * 0.22),
+    ovalSub(rx * 0.32, -ry * 0.62, rx * 0.11, ry * 0.17)
+  ].join(' ');
+  return `${outline} ${holes}`;
 }
 
 function Leaf({ s, angle, w, h, stemLen, sp, i }) {
@@ -137,7 +159,7 @@ function Leaf({ s, angle, w, h, stemLen, sp, i }) {
     : sp.straight
       ? <Path d={`M ${-rx * 0.62} ${ry} Q ${-rx * (1 - asym)} ${ry * 0.1} 0 ${-ry} Q ${rx * (1 + asym)} ${ry * 0.1} ${rx * 0.62} ${ry} Z`} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round" />
       : sp.slits
-        ? <Path d={scallopedLeafPath(rx, ry)} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round" />
+        ? <Path d={monsteraLeafPath(rx, ry)} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round" fillRule="evenodd" />
         : <Path
             d={`M 0 ${ry} C ${-rx * (1.18 + asym)} ${ry * 0.4}, ${-rx * (0.82 + asym * 0.5)} ${-ry * 0.82}, ${tip} ${-ry} C ${rx * (0.82 - asym * 0.5)} ${-ry * 0.82}, ${rx * (1.18 - asym)} ${ry * 0.4}, 0 ${ry} Z`}
             fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round"
@@ -388,7 +410,10 @@ export function PlantAvatar({ kind = 'generic', mood = 'happy', size = 96, sway 
           {/* Boden-Schattenlinie */}
           <Line x1={-s * 0.25} y1={-s * 0.015} x2={s * 0.25} y2={-s * 0.015} stroke={INK} strokeWidth={Math.max(1, s * 0.009)} strokeLinecap="round" opacity={0.4} />
 
-          <G transform={`translate(0 ${-(potH * 0.92)})`}>
+          {/* Pflanzenbasis deutlich unter dem Rand ansetzen, nicht nur knapp
+              daran - sonst wirkt es, als schwebe die Pflanze ueber dem Topf
+              statt darin zu stecken. Gilt fuer alle Topfgroessen gleich. */}
+          <G transform={`translate(0 ${-(potH * 0.68)})`}>
             {sp.form === 'fan' && <Fan s={s} sp={sp} />}
             {sp.form === 'bamboo' && <Bamboo s={s} />}
             {sp.form === 'bonsai' && <Bonsai s={s} />}
