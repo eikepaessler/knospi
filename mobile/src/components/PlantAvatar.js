@@ -16,7 +16,7 @@ const PAPER = '#FFFDF7';
 const SPECIES = {
   begonia: { form: 'fan', count: 4, w: 0.24, h: 0.34, spread: 40, vein: 'mid', spots: 4, pot: 'band' },
   kingbegonia: { form: 'fan', count: 4, w: 0.27, h: 0.3, spread: 44, vein: 'fan', spots: 3, pot: 'hatch' },
-  pilea: { form: 'fan', count: 5, w: 0.2, h: 0.2, spread: 50, round: true, vein: 'fan', pot: 'basket' },
+  pilea: { form: 'fan', count: 5, w: 0.22, h: 0.22, spread: 46, round: true, vein: 'fan', pot: 'basket', stemMul: 3.2 },
   monstera: { form: 'fan', count: 3, w: 0.34, h: 0.38, spread: 46, droop: 6, vein: 'mid', slits: 3, pot: 'band', stemHeight: 0.24 },
   strelitzia: { form: 'fan', count: 4, w: 0.19, h: 0.46, spread: 30, vein: 'mid', pot: 'ribbed' },
   pothos: { form: 'fan', count: 5, w: 0.23, h: 0.25, spread: 74, droop: 22, vein: 'mid', pot: 'basket' },
@@ -192,7 +192,7 @@ function Fan({ s, sp }) {
     const edge = Math.abs(a) > sp.spread * 0.8;
     const grow = (mid ? 1.12 : edge ? 0.86 : 1) + jitter(i, 0.05);
     const w = s * sp.w * grow, h = s * sp.h * grow * (1 + jitter(i + 5, 0.06));
-    const stemLen = s * 0.05 * grow;
+    const stemLen = s * 0.05 * grow * (sp.stemMul || 1);
     const rot = a + (sp.droop ? (a / sp.spread) * sp.droop : 0) + jitter(i, 2.4);
     return <Leaf key={i} s={s} i={i} angle={rot} w={w} h={h} stemLen={stemLen} sp={sp} />;
   });
