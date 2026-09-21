@@ -292,8 +292,6 @@ export function PlantDetailScreen() {
         </Card>
         <SoftButton label="Sieht komisch aus? Pflanzen-Doktor öffnen" onPress={() => navigation.navigate('DoctorFlow', { plantId: plant.id })} />
       </Collapsible>
-
-      <GhostButton label="Pflanze entfernen" onPress={confirmRemovePlant} style={{ marginTop: 10 }} />
     </Screen>
   );
 }
