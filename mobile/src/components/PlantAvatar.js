@@ -2,6 +2,8 @@ import { useEffect, useRef } from 'react';
 import { Animated, Easing, View } from 'react-native';
 import Svg, { Circle, Ellipse, G, Line, Path } from 'react-native-svg';
 
+const AnimatedG = Animated.createAnimatedComponent(G);
+
 // Botanische Feder-Skizzen im Stil von Vintage-Pflanzen-Illustrationen:
 // duenne Tuschlinien, verzweigte Blattadern, spitze Blattformen, volle
 // Buendel statt symmetrischer Faecher, dazu ein niedliches, dick gezeichnetes
@@ -14,7 +16,7 @@ const INK = '#1D2418';
 const PAPER = '#FFFDF7';
 
 const SPECIES = {
-  begonia: { form: 'fan', count: 4, w: 0.24, h: 0.34, spread: 40, vein: 'mid', spots: 4, pot: 'band' },
+  begonia: { form: 'fan', count: 4, w: 0.24, h: 0.34, spread: 40, vein: 'mid', spots: 4, pot: 'band', stemHeight: 0.2 },
   kingbegonia: { form: 'fan', count: 4, w: 0.27, h: 0.3, spread: 44, vein: 'fan', spots: 3, pot: 'hatch', stemHeight: 0.2 },
   pilea: { form: 'fan', count: 5, w: 0.22, h: 0.22, spread: 46, round: true, vein: 'fan', pot: 'basket', stemMul: 2.4, lift: 0.14 },
   monstera: { form: 'fan', count: 3, w: 0.34, h: 0.38, spread: 46, droop: 6, vein: 'mid', slits: 3, pot: 'band', stemHeight: 0.24 },
@@ -52,6 +54,29 @@ const SPECIES = {
 // echte Zufallszahl, damit dieselbe Art bei jedem Rendern gleich aussieht.
 function jitter(i, amp) {
   return Math.sin(i * 2.61 + 0.7) * amp;
+}
+
+// Jedes Blatt/Rohr bekommt sein eigenes, leicht phasenverschobenes Wackeln
+// statt dass die ganze Pflanze als ein starrer Block kippt - Dauer und
+// Startverzoegerung sind deterministisch aus `seed` abgeleitet (kein
+// Math.random()), damit sich zwei Blaetter nie exakt synchron bewegen.
+function useSway(seed, enabled, baseDuration = 2200) {
+  const anim = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    if (!enabled) return undefined;
+    const delay = Math.abs(jitter(seed, 1)) * 700;
+    const duration = baseDuration + jitter(seed + 11, 1) * 450;
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.timing(anim, { toValue: 1, duration, easing: Easing.inOut(Easing.sin), useNativeDriver: false }),
+        Animated.timing(anim, { toValue: 0, duration, easing: Easing.inOut(Easing.sin), useNativeDriver: false })
+      ])
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [enabled, seed, baseDuration, anim]);
+  return anim;
 }
 
 // Ovale Teilkontur aus vier Quadratic-Kurven - Baustein fuer die
@@ -104,8 +129,11 @@ function monsteraLeafPath(rx, ry) {
   return `${outline} ${holes}`;
 }
 
-function Leaf({ s, angle, w, h, stemLen, sp, i }) {
+function Leaf({ s, angle, w, h, stemLen, sp, i, sway }) {
   const rx = w / 2, ry = h / 2;
+  const leafAmp = sp.round ? 4 : 3.2;
+  const swayAnim = useSway(i, sway, 2000);
+  const swayTransform = swayAnim.interpolate({ inputRange: [0, 1], outputRange: [`rotate(${angle - leafAmp})`, `rotate(${angle + leafAmp})`] });
   const lineW = Math.max(0.7, s * 0.008);
   const inner = [];
 
@@ -177,14 +205,14 @@ function Leaf({ s, angle, w, h, stemLen, sp, i }) {
   const stemBend = jitter(i + 7, 0.15) * (stemLen || 1);
 
   return (
-    <G transform={`rotate(${angle})`}>
+    <AnimatedG transform={swayTransform}>
       {stemLen > 0 && <Path d={`M 0 0 Q ${stemBend} ${-stemLen * 0.5} 0 ${-stemLen}`} stroke={INK} strokeWidth={lineW * 1.2} strokeLinecap="round" fill="none" />}
       <G transform={`translate(0 ${-(stemLen + ry)})`}>{shape}{inner}</G>
-    </G>
+    </AnimatedG>
   );
 }
 
-function Fan({ s, sp }) {
+function Fan({ s, sp, sway }) {
   const n = sp.count;
   const angles = n === 1 ? [0] : Array.from({ length: n }, (_, i) => -sp.spread + (2 * sp.spread * i) / (n - 1));
   return angles.map((a, i) => {
@@ -194,48 +222,65 @@ function Fan({ s, sp }) {
     const w = s * sp.w * grow, h = s * sp.h * grow * (1 + jitter(i + 5, 0.06));
     const stemLen = s * 0.05 * grow * (sp.stemMul || 1);
     const rot = a + (sp.droop ? (a / sp.spread) * sp.droop : 0) + jitter(i, 2.4);
-    return <Leaf key={i} s={s} i={i} angle={rot} w={w} h={h} stemLen={stemLen} sp={sp} />;
+    return <Leaf key={i} s={s} i={i} angle={rot} w={w} h={h} stemLen={stemLen} sp={sp} sway={sway} />;
   });
 }
 
-function Bamboo({ s }) {
+function Cane({ s, c, i, sway }) {
+  const lineW = Math.max(0.7, s * 0.008);
+  const cw = Math.max(2, s * 0.038);
+  const swayAnim = useSway(i, sway, 2600);
+  const swayTransform = swayAnim.interpolate({ inputRange: [0, 1], outputRange: [`translate(${c.x} 0) rotate(${c.rot - 2.4})`, `translate(${c.x} 0) rotate(${c.rot + 2.4})`] });
+  const nodes = [1, 2, 3].map((k) => <Line key={k} x1={-cw / 2} y1={-c.h * (k / 4)} x2={cw / 2} y2={-c.h * (k / 4)} stroke={INK} strokeWidth={lineW} />);
+  const leaves = [0.34, 0.62].map((at, li) => {
+    const dir = (i + li) % 2 ? 1 : -1;
+    const y = -c.h * at;
+    return (
+      <Path key={li} d={`M 0 ${y} Q ${dir * s * 0.11} ${y - s * 0.02} ${dir * s * 0.13} ${y + s * 0.015}`} stroke={INK} strokeWidth={lineW} fill="none" strokeLinecap="round" />
+    );
+  });
+  return (
+    <AnimatedG transform={swayTransform}>
+      <Line x1={0} y1={0} x2={0} y2={-c.h} stroke={INK} strokeWidth={cw} strokeLinecap="round" />
+      <Line x1={0} y1={0} x2={0} y2={-c.h} stroke={PAPER} strokeWidth={cw - s * 0.015} strokeLinecap="round" />
+      {nodes}{leaves}
+    </AnimatedG>
+  );
+}
+
+function Bamboo({ s, sway }) {
   const canes = [
     { x: -s * 0.11, h: s * 0.5, rot: -5 },
     { x: 0, h: s * 0.6, rot: 0 },
     { x: s * 0.11, h: s * 0.44, rot: 6 }
   ];
-  const lineW = Math.max(0.7, s * 0.008);
-  return canes.map((c, i) => {
-    const cw = Math.max(2, s * 0.038);
-    const nodes = [1, 2, 3].map((k) => <Line key={k} x1={-cw / 2} y1={-c.h * (k / 4)} x2={cw / 2} y2={-c.h * (k / 4)} stroke={INK} strokeWidth={lineW} />);
-    const leaves = [0.34, 0.62].map((at, li) => {
-      const dir = (i + li) % 2 ? 1 : -1;
-      const y = -c.h * at;
-      return (
-        <Path key={li} d={`M 0 ${y} Q ${dir * s * 0.11} ${y - s * 0.02} ${dir * s * 0.13} ${y + s * 0.015}`} stroke={INK} strokeWidth={lineW} fill="none" strokeLinecap="round" />
-      );
-    });
-    return (
-      <G key={i} transform={`translate(${c.x} 0) rotate(${c.rot})`}>
-        <Line x1={0} y1={0} x2={0} y2={-c.h} stroke={INK} strokeWidth={cw} strokeLinecap="round" />
-        <Line x1={0} y1={0} x2={0} y2={-c.h} stroke={PAPER} strokeWidth={cw - s * 0.015} strokeLinecap="round" />
-        {nodes}{leaves}
-      </G>
-    );
-  });
+  return canes.map((c, i) => <Cane key={i} s={s} c={c} i={i} sway={sway} />);
 }
 
-function Bonsai({ s }) {
+function BonsaiCanopy({ s, seed, sway, children }) {
+  const swayAnim = useSway(seed, sway, 2400);
+  const swayTransform = swayAnim.interpolate({ inputRange: [0, 1], outputRange: ['rotate(-2.2)', 'rotate(2.2)'] });
+  return <AnimatedG transform={swayTransform}>{children}</AnimatedG>;
+}
+
+function Bonsai({ s, sway }) {
   const lineW = Math.max(0.7, s * 0.008);
   return (
     <G>
       <Path d={`M 0 0 C ${s * 0.06} ${-s * 0.12}, ${-s * 0.02} ${-s * 0.2}, ${s * 0.02} ${-s * 0.3}`} stroke={INK} strokeWidth={s * 0.065} fill="none" strokeLinecap="round" />
       <Path d={`M 0 0 C ${s * 0.06} ${-s * 0.12}, ${-s * 0.02} ${-s * 0.2}, ${s * 0.02} ${-s * 0.3}`} stroke={PAPER} strokeWidth={s * 0.042} fill="none" strokeLinecap="round" />
-      <Ellipse cx={-s * 0.02} cy={-s * 0.4} rx={s * 0.2} ry={s * 0.09} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.2} />
-      <Ellipse cx={s * 0.15} cy={-s * 0.3} rx={s * 0.13} ry={s * 0.065} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.2} />
-      {[-0.11, -0.03, 0.05, 0.13].map((dx, i) => (
-        <Line key={i} x1={-s * 0.02 + dx * s} y1={-s * 0.4} x2={-s * 0.02 + dx * s * 1.3} y2={-s * 0.46} stroke={INK} strokeWidth={lineW * 0.7} strokeLinecap="round" opacity={0.7} />
-      ))}
+      <BonsaiCanopy s={s} seed={0} sway={sway}>
+        <Ellipse cx={-s * 0.02} cy={-s * 0.4} rx={s * 0.2} ry={s * 0.09} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.2} />
+        {[-0.11, -0.03].map((dx, i) => (
+          <Line key={i} x1={-s * 0.02 + dx * s} y1={-s * 0.4} x2={-s * 0.02 + dx * s * 1.3} y2={-s * 0.46} stroke={INK} strokeWidth={lineW * 0.7} strokeLinecap="round" opacity={0.7} />
+        ))}
+      </BonsaiCanopy>
+      <BonsaiCanopy s={s} seed={1} sway={sway}>
+        <Ellipse cx={s * 0.15} cy={-s * 0.3} rx={s * 0.13} ry={s * 0.065} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.2} />
+        {[0.05, 0.13].map((dx, i) => (
+          <Line key={i} x1={-s * 0.02 + dx * s} y1={-s * 0.4} x2={-s * 0.02 + dx * s * 1.3} y2={-s * 0.46} stroke={INK} strokeWidth={lineW * 0.7} strokeLinecap="round" opacity={0.7} />
+        ))}
+      </BonsaiCanopy>
     </G>
   );
 }
@@ -244,8 +289,31 @@ function Bonsai({ s }) {
 // runder Triebe, nicht als ein Koerper mit duennen Armen - drei
 // ueberlappende, vollflaechig gefuellte Zylinder wirken organischer und
 // koennen sich nicht wie lose Striche vom Koerper abloesen.
-function Cactus({ s }) {
+function CactusBlob({ s, b, bi, sway }) {
   const lineW = Math.max(0.7, s * 0.008);
+  const swayAnim = useSway(bi, sway, 3200);
+  // Ein Kaktus ist holzig/starr - nur ein winziges Wackeln, kein Blatt-Flattern.
+  const swayTransform = swayAnim.interpolate({ inputRange: [0, 1], outputRange: [`translate(${b.x} 0) rotate(${b.tilt - 1})`, `translate(${b.x} 0) rotate(${b.tilt + 1})`] });
+  const ribs = [0.3, 0.5, 0.7].map((at, i) => (
+    <Line key={i} x1={-b.w / 2 + at * b.w} y1={-b.h * 0.88} x2={-b.w / 2 + at * b.w} y2={-b.h * 0.12}
+      stroke={INK} strokeWidth={lineW} opacity={i === 1 ? 1 : 0.5} />
+  ));
+  const spines = [0.28, 0.48, 0.68, 0.85].map((at, i) => (
+    <Line key={i} x1={i % 2 ? b.w * 0.4 : -b.w * 0.4} y1={-b.h * at} x2={i % 2 ? b.w * 0.52 : -b.w * 0.52} y2={-b.h * at}
+      stroke={INK} strokeWidth={lineW} strokeLinecap="round" />
+  ));
+  return (
+    <AnimatedG transform={swayTransform}>
+      <G transform={`translate(0 ${-b.h / 2})`}>
+        <Ellipse cx={0} cy={0} rx={b.w / 2} ry={b.h / 2} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} />
+      </G>
+      {ribs}
+      {spines}
+    </AnimatedG>
+  );
+}
+
+function Cactus({ s, sway }) {
   const blobs = [
     { x: -s * 0.14, w: s * 0.16, h: s * 0.3, tilt: -9 },
     { x: s * 0.13, w: s * 0.15, h: s * 0.24, tilt: 11 },
@@ -253,25 +321,7 @@ function Cactus({ s }) {
   ];
   return (
     <G>
-      {blobs.map((b, bi) => {
-        const ribs = [0.3, 0.5, 0.7].map((at, i) => (
-          <Line key={i} x1={-b.w / 2 + at * b.w} y1={-b.h * 0.88} x2={-b.w / 2 + at * b.w} y2={-b.h * 0.12}
-            stroke={INK} strokeWidth={lineW} opacity={i === 1 ? 1 : 0.5} />
-        ));
-        const spines = [0.28, 0.48, 0.68, 0.85].map((at, i) => (
-          <Line key={i} x1={i % 2 ? b.w * 0.4 : -b.w * 0.4} y1={-b.h * at} x2={i % 2 ? b.w * 0.52 : -b.w * 0.52} y2={-b.h * at}
-            stroke={INK} strokeWidth={lineW} strokeLinecap="round" />
-        ));
-        return (
-          <G key={bi} transform={`translate(${b.x} 0) rotate(${b.tilt})`}>
-            <G transform={`translate(0 ${-b.h / 2})`}>
-              <Ellipse cx={0} cy={0} rx={b.w / 2} ry={b.h / 2} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} />
-            </G>
-            {ribs}
-            {spines}
-          </G>
-        );
-      })}
+      {blobs.map((b, bi) => <CactusBlob key={bi} s={s} b={b} bi={bi} sway={sway} />)}
     </G>
   );
 }
@@ -436,7 +486,7 @@ export function PlantAvatar({ kind = 'generic', mood = 'happy', size = 96, sway 
     return () => loop.stop();
   }, [sway, swayAnim]);
 
-  const rotate = swayAnim.interpolate({ inputRange: [0, 1], outputRange: ['-2.6deg', '2.6deg'] });
+  const rotate = swayAnim.interpolate({ inputRange: [0, 1], outputRange: ['-1.6deg', '1.6deg'] });
   const potScale = sp.potScale || 1;
   const potW = s * 0.56 * potScale, potH = s * 0.42 * potScale;
   const eyeD = Math.max(2.4, s * 0.05);
@@ -473,10 +523,10 @@ export function PlantAvatar({ kind = 'generic', mood = 'happy', size = 96, sway 
                 Strelizie, Ufopflanze), deren eigene, pro Blatt gezeichnete
                 Stiele sonst komplett unter dem Topfrand verschwinden. */}
             <G transform={`translate(0 ${-s * ((sp.stemHeight || 0) + (sp.lift || 0))})`}>
-              {sp.form === 'fan' && <Fan s={s} sp={sp} />}
-              {sp.form === 'bamboo' && <Bamboo s={s} />}
-              {sp.form === 'bonsai' && <Bonsai s={s} />}
-              {sp.form === 'cactus' && <Cactus s={s} />}
+              {sp.form === 'fan' && <Fan s={s} sp={sp} sway={sway} />}
+              {sp.form === 'bamboo' && <Bamboo s={s} sway={sway} />}
+              {sp.form === 'bonsai' && <Bonsai s={s} sway={sway} />}
+              {sp.form === 'cactus' && <Cactus s={s} sway={sway} />}
               {!!sp.bloom && <Bloom s={s} />}
             </G>
           </G>
