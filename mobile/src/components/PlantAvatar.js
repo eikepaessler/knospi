@@ -23,7 +23,7 @@ const SPECIES = {
   sansevieria: { form: 'fan', count: 7, w: 0.075, h: 0.62, spread: 22, straight: true, potScale: 0.86, pot: 'legs' },
   coffee: { form: 'fan', count: 5, w: 0.17, h: 0.3, spread: 46, vein: 'mid', berries: true, pot: 'band' },
   rubber: { form: 'fan', count: 4, w: 0.24, h: 0.38, spread: 34, vein: 'mid', pot: 'hatch' },
-  fern: { form: 'fan', count: 7, w: 0.1, h: 0.48, spread: 54, vein: 'mid', comb: 5, pot: 'legs' },
+  fern: { form: 'fan', count: 5, w: 0.11, h: 0.48, spread: 50, vein: 'mid', comb: 3, pot: 'legs' },
   bamboo: { form: 'bamboo', potScale: 0.82, pot: 'ribbed' },
   bonsai: { form: 'bonsai', potScale: 1.06, pot: 'band' },
   cactus: { form: 'cactus', potScale: 0.9, pot: 'bowl' },
@@ -36,7 +36,7 @@ const SPECIES = {
   philodendron: { form: 'fan', count: 5, w: 0.2, h: 0.22, spread: 70, droop: 20, vein: 'mid', pot: 'basket' },
   yucca: { form: 'fan', count: 8, w: 0.065, h: 0.58, spread: 26, straight: true, potScale: 0.9, pot: 'hatch' },
   dracaena: { form: 'fan', count: 6, w: 0.09, h: 0.5, spread: 36, vein: 'mid', pot: 'ribbed' },
-  areca: { form: 'fan', count: 6, w: 0.12, h: 0.5, spread: 48, vein: 'mid', comb: 6, pot: 'legs' },
+  areca: { form: 'fan', count: 5, w: 0.13, h: 0.5, spread: 46, vein: 'mid', comb: 4, pot: 'legs' },
   zz: { form: 'fan', count: 5, w: 0.16, h: 0.28, spread: 44, vein: 'mid', pot: 'band' },
   fittonia: { form: 'fan', count: 6, w: 0.14, h: 0.14, spread: 55, round: true, vein: 'fan', pot: 'bowl' },
   peacelily: { form: 'fan', count: 4, w: 0.2, h: 0.36, spread: 34, vein: 'mid', pot: 'band' },
@@ -96,11 +96,13 @@ function Leaf({ s, angle, w, h, stemLen, sp, i }) {
     }
   }
   if (sp.comb) {
+    // Kurz und duenn halten - zu lange/zu viele Fiederadern auf mehreren
+    // ueberlappenden Blaettern liessen die Pflanze "zerstueckelt" wirken.
     for (let k = 0; k < sp.comb; k++) {
-      const y = -ry * 0.78 + k * (ry * 1.5 / sp.comb);
+      const y = -ry * 0.7 + k * (ry * 1.3 / sp.comb);
       [-1, 1].forEach((dir) => inner.push(
-        <Line key={'c' + k + dir} x1={0} y1={y} x2={dir * rx * 0.9} y2={y + ry * 0.1}
-          stroke={INK} strokeWidth={lineW * 0.8} strokeLinecap="round" />
+        <Line key={'c' + k + dir} x1={0} y1={y} x2={dir * rx * 0.55} y2={y + ry * 0.08}
+          stroke={INK} strokeWidth={lineW * 0.6} strokeLinecap="round" opacity={0.75} />
       ));
     }
   }
@@ -113,22 +115,23 @@ function Leaf({ s, angle, w, h, stemLen, sp, i }) {
     inner.push(<Circle key="berry" cx={rx * 0.5} cy={ry * 0.6} r={Math.max(1.4, w * 0.06)} fill={PAPER} stroke={INK} strokeWidth={lineW} />);
   }
 
-  // Leichte Asymmetrie statt spiegelgleicher Kurven - echte Blaetter sind
-  // nie perfekt symmetrisch. tip verschiebt die Spitze seitlich, asym
-  // verzieht die beiden Kontrollpunkte gegenlaeufig.
-  const asym = jitter(i, 0.16);
-  const tip = jitter(i + 3, 0.14) * rx;
+  // Ganz leichte Asymmetrie statt spiegelgleicher Kurven - echte Blaetter
+  // sind nie perfekt symmetrisch, aber zu viel Verzug wirkt schnell wie
+  // abgebrochen statt organisch. Schwertblaetter (straight) behalten eine
+  // mittige Spitze, damit sie zu ihren geraden Seitenadern passen.
+  const asym = jitter(i, 0.07);
+  const tip = sp.straight ? 0 : jitter(i + 3, 0.06) * rx;
 
   const shape = sp.round
-    ? <Circle cx={jitter(i, 0.06) * rx} cy={0} r={rx} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} />
+    ? <Circle cx={jitter(i, 0.04) * rx} cy={0} r={rx} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} />
     : sp.straight
-      ? <Path d={`M ${-rx * 0.62} ${ry} Q ${-rx * (1 - asym)} ${ry * 0.1} ${tip * 0.6} ${-ry} Q ${rx * (1 + asym)} ${ry * 0.1} ${rx * 0.62} ${ry} Z`} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round" />
+      ? <Path d={`M ${-rx * 0.62} ${ry} Q ${-rx * (1 - asym)} ${ry * 0.1} 0 ${-ry} Q ${rx * (1 + asym)} ${ry * 0.1} ${rx * 0.62} ${ry} Z`} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round" />
       : <Path
           d={`M 0 ${ry} C ${-rx * (1.18 + asym)} ${ry * 0.4}, ${-rx * (0.82 + asym * 0.5)} ${-ry * 0.82}, ${tip} ${-ry} C ${rx * (0.82 - asym * 0.5)} ${-ry * 0.82}, ${rx * (1.18 - asym)} ${ry * 0.4}, 0 ${ry} Z`}
           fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round"
         />;
 
-  const stemBend = jitter(i + 7, 0.4) * (stemLen || 1);
+  const stemBend = jitter(i + 7, 0.15) * (stemLen || 1);
 
   return (
     <G transform={`rotate(${angle})`}>
