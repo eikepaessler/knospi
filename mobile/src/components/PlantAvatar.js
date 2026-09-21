@@ -73,18 +73,24 @@ function ovalSub(cx, cy, rx, ry) {
 // zweiter Teilpfad im selben <Path>, der per fillRule="evenodd" transparent
 // bleibt und dadurch zu jedem Hintergrund passt.
 function monsteraLeafPath(rx, ry) {
+  // Herzfoermige Basis: eine Kerbe in der Mitte (Stielansatz), die zu
+  // beiden Seiten zu je einem runden Lappen ausschwingt, bevor es an den
+  // Seiten hoch zur Spitze weitergeht.
+  const notchY = ry * 0.6;
   const outline = [
-    `M 0 ${ry * 0.88}`,
-    `Q ${rx * 0.22} ${ry * 1.08} ${rx * 0.48} ${ry * 0.88}`,
-    `Q ${rx * 1.08} ${ry * 0.6} ${rx * 0.88} ${ry * 0.02}`,
+    `M 0 ${notchY}`,
+    `Q ${rx * 0.06} ${ry * 0.95} ${rx * 0.4} ${ry * 1.05}`,
+    `Q ${rx * 0.78} ${ry * 1.12} ${rx * 0.86} ${ry * 0.62}`,
+    `Q ${rx * 1.1} ${ry * 0.42} ${rx * 0.88} ${ry * 0.02}`,
     `Q ${rx * 0.5} ${-ry * 0.12} ${rx * 0.7} ${-ry * 0.45}`,
     `Q ${rx * 1.0} ${-ry * 0.62} ${rx * 0.58} ${-ry * 0.9}`,
     `Q ${rx * 0.3} ${-ry * 1.07} 0 ${-ry}`,
     `Q ${-rx * 0.3} ${-ry * 1.07} ${-rx * 0.58} ${-ry * 0.9}`,
     `Q ${-rx * 1.0} ${-ry * 0.62} ${-rx * 0.7} ${-ry * 0.45}`,
     `Q ${-rx * 0.5} ${-ry * 0.12} ${-rx * 0.88} ${ry * 0.02}`,
-    `Q ${-rx * 1.08} ${ry * 0.6} ${-rx * 0.48} ${ry * 0.88}`,
-    `Q ${-rx * 0.22} ${ry * 1.08} 0 ${ry * 0.88}`,
+    `Q ${-rx * 1.1} ${ry * 0.42} ${-rx * 0.86} ${ry * 0.62}`,
+    `Q ${-rx * 0.78} ${ry * 1.12} ${-rx * 0.4} ${ry * 1.05}`,
+    `Q ${-rx * 0.06} ${ry * 0.95} 0 ${notchY}`,
     'Z'
   ].join(' ');
   const holes = [
@@ -400,8 +406,14 @@ export function PlantAvatar({ kind = 'generic', mood = 'happy', size = 96, sway 
   }, [sway, swayAnim]);
 
   const rotate = swayAnim.interpolate({ inputRange: [0, 1], outputRange: ['-2.6deg', '2.6deg'] });
-  const potW = s * 0.56 * (sp.potScale || 1), potH = s * 0.42 * (sp.potScale || 1);
+  const potScale = sp.potScale || 1;
+  const potW = s * 0.56 * potScale, potH = s * 0.42 * potScale;
   const eyeD = Math.max(2.4, s * 0.05);
+  // Bei kleineren Toepfen (Kaktus, Bogenhanf, Palmlilie, ...) reicht ein
+  // fixer Anteil der (dann kleineren) Topfhoehe nicht - die Pflanze bleibt
+  // gleich gross und wirkt trotzdem, als schwebe sie ueber dem Topf. Je
+  // kleiner der Topf, desto staerker zusaetzlich absenken.
+  const anchorRatio = 0.68 - (1 - potScale) * 1.6;
 
   return (
     <View style={[{ width: s, height: s, alignItems: 'center', justifyContent: 'center' }, style]}>
@@ -413,7 +425,7 @@ export function PlantAvatar({ kind = 'generic', mood = 'happy', size = 96, sway 
           {/* Pflanzenbasis deutlich unter dem Rand ansetzen, nicht nur knapp
               daran - sonst wirkt es, als schwebe die Pflanze ueber dem Topf
               statt darin zu stecken. Gilt fuer alle Topfgroessen gleich. */}
-          <G transform={`translate(0 ${-(potH * 0.68)})`}>
+          <G transform={`translate(0 ${-(potH * anchorRatio)})`}>
             {sp.form === 'fan' && <Fan s={s} sp={sp} />}
             {sp.form === 'bamboo' && <Bamboo s={s} />}
             {sp.form === 'bonsai' && <Bonsai s={s} />}
