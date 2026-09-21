@@ -17,7 +17,7 @@ const SPECIES = {
   begonia: { form: 'fan', count: 4, w: 0.24, h: 0.34, spread: 40, vein: 'mid', spots: 4, pot: 'band' },
   kingbegonia: { form: 'fan', count: 4, w: 0.27, h: 0.3, spread: 44, vein: 'fan', spots: 3, pot: 'hatch' },
   pilea: { form: 'fan', count: 5, w: 0.2, h: 0.2, spread: 50, round: true, vein: 'fan', pot: 'basket' },
-  monstera: { form: 'fan', count: 3, w: 0.36, h: 0.4, spread: 50, droop: 8, vein: 'mid', slits: 3, pot: 'band' },
+  monstera: { form: 'fan', count: 3, w: 0.34, h: 0.38, spread: 46, droop: 6, vein: 'mid', slits: 3, pot: 'band', stemHeight: 0.24 },
   strelitzia: { form: 'fan', count: 4, w: 0.19, h: 0.46, spread: 30, vein: 'mid', pot: 'ribbed' },
   pothos: { form: 'fan', count: 5, w: 0.23, h: 0.25, spread: 74, droop: 22, vein: 'mid', pot: 'basket' },
   sansevieria: { form: 'fan', count: 7, w: 0.075, h: 0.62, spread: 22, straight: true, potScale: 0.86, pot: 'legs' },
@@ -429,10 +429,15 @@ export function PlantAvatar({ kind = 'generic', mood = 'happy', size = 96, sway 
               daran - sonst wirkt es, als schwebe die Pflanze ueber dem Topf
               statt darin zu stecken. Gilt fuer alle Topfgroessen gleich. */}
           <G transform={`translate(0 ${-(potH * anchorRatio)})`}>
-            {sp.form === 'fan' && <Fan s={s} sp={sp} />}
-            {sp.form === 'bamboo' && <Bamboo s={s} />}
-            {sp.form === 'bonsai' && <Bonsai s={s} />}
-            {sp.form === 'cactus' && <Cactus s={s} />}
+            {!!sp.stemHeight && (
+              <Line x1={0} y1={0} x2={0} y2={-s * sp.stemHeight} stroke={INK} strokeWidth={Math.max(1.4, s * 0.02)} strokeLinecap="round" />
+            )}
+            <G transform={`translate(0 ${-s * (sp.stemHeight || 0)})`}>
+              {sp.form === 'fan' && <Fan s={s} sp={sp} />}
+              {sp.form === 'bamboo' && <Bamboo s={s} />}
+              {sp.form === 'bonsai' && <Bonsai s={s} />}
+              {sp.form === 'cactus' && <Cactus s={s} />}
+            </G>
           </G>
 
           <Pot s={s} sp={sp} potW={potW} potH={potH} />
