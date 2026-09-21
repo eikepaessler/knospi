@@ -298,9 +298,9 @@ const BLUSH = '#E8998A';
 
 function Blush({ eyeD }) {
   return (
-    <G opacity={0.55}>
-      <Ellipse cx={-eyeD * 2.5} cy={eyeD * 0.9} rx={eyeD * 0.75} ry={eyeD * 0.5} fill={BLUSH} />
-      <Ellipse cx={eyeD * 2.5} cy={eyeD * 0.9} rx={eyeD * 0.75} ry={eyeD * 0.5} fill={BLUSH} />
+    <G opacity={0.65}>
+      <Ellipse cx={-eyeD * 2.5} cy={eyeD * 0.95} rx={eyeD * 1.1} ry={eyeD * 0.72} fill={BLUSH} />
+      <Ellipse cx={eyeD * 2.5} cy={eyeD * 0.95} rx={eyeD * 1.1} ry={eyeD * 0.72} fill={BLUSH} />
     </G>
   );
 }
@@ -313,7 +313,7 @@ const FACE = {
       <Circle cx={eyeD * 1.5} cy={0} r={eyeD * 0.62} fill={INK} />
       <Circle cx={-eyeD * 1.24} cy={-eyeD * 0.22} r={eyeD * 0.18} fill={PAPER} />
       <Circle cx={eyeD * 1.76} cy={-eyeD * 0.22} r={eyeD * 0.18} fill={PAPER} />
-      <Path d={`M ${-eyeD * 1.4} ${eyeD * 1.2} Q 0 ${eyeD * 2.7} ${eyeD * 1.4} ${eyeD * 1.2}`} stroke={INK} strokeWidth={s * 0.022} fill="none" strokeLinecap="round" />
+      <Path d={`M ${-eyeD * 0.95} ${eyeD * 1.15} Q 0 ${eyeD * 2} ${eyeD * 0.95} ${eyeD * 1.15}`} stroke={INK} strokeWidth={s * 0.022} fill="none" strokeLinecap="round" />
     </G>
   ),
   sad: (s, eyeD) => (
@@ -321,7 +321,7 @@ const FACE = {
       <Blush eyeD={eyeD} />
       <Path d={`M ${-eyeD * 2.15} ${-eyeD * 0.1} A ${eyeD * 1.05} ${eyeD * 1.05} 0 0 0 ${-eyeD * 0.85} ${-eyeD * 0.1}`} stroke={INK} strokeWidth={s * 0.024} fill="none" strokeLinecap="round" />
       <Path d={`M ${eyeD * 0.85} ${-eyeD * 0.1} A ${eyeD * 1.05} ${eyeD * 1.05} 0 0 0 ${eyeD * 2.15} ${-eyeD * 0.1}`} stroke={INK} strokeWidth={s * 0.024} fill="none" strokeLinecap="round" />
-      <Path d={`M ${-eyeD * 1.4} ${eyeD * 1.75} Q 0 ${eyeD * 0.8} ${eyeD * 1.4} ${eyeD * 1.75}`} stroke={INK} strokeWidth={s * 0.022} fill="none" strokeLinecap="round" />
+      <Path d={`M ${-eyeD * 0.95} ${eyeD * 1.65} Q 0 ${eyeD * 1} ${eyeD * 0.95} ${eyeD * 1.65}`} stroke={INK} strokeWidth={s * 0.022} fill="none" strokeLinecap="round" />
     </G>
   ),
   sleepy: (s, eyeD) => (
@@ -329,7 +329,7 @@ const FACE = {
       <Blush eyeD={eyeD} />
       <Path d={`M ${-eyeD * 2.3} 0 Q ${-eyeD * 1.5} ${-eyeD} ${-eyeD * 0.7} 0`} stroke={INK} strokeWidth={s * 0.022} fill="none" strokeLinecap="round" />
       <Path d={`M ${eyeD * 0.7} 0 Q ${eyeD * 1.5} ${-eyeD} ${eyeD * 2.3} 0`} stroke={INK} strokeWidth={s * 0.022} fill="none" strokeLinecap="round" />
-      <Path d={`M ${-eyeD * 0.9} ${eyeD * 1.5} Q 0 ${eyeD * 1.9} ${eyeD * 0.9} ${eyeD * 1.5}`} stroke={INK} strokeWidth={s * 0.024} fill="none" strokeLinecap="round" />
+      <Path d={`M ${-eyeD * 0.6} ${eyeD * 1.55} Q 0 ${eyeD * 1.8} ${eyeD * 0.6} ${eyeD * 1.55}`} stroke={INK} strokeWidth={s * 0.024} fill="none" strokeLinecap="round" />
     </G>
   ),
   pot: (s, eyeD) => (
@@ -380,7 +380,7 @@ export function PlantAvatar({ kind = 'generic', mood = 'happy', size = 96, sway 
 
           {/* Gesicht - bewusst kraeftiger gezeichnet als die duenne
               Botanik-Skizze darunter, damit es als niedlicher Kontrast wirkt. */}
-          <G transform={`translate(0 ${-potH * 0.34})`}>
+          <G transform={`translate(0 ${-potH * 0.44})`}>
             {(FACE[mood] || FACE.happy)(s, eyeD)}
           </G>
         </Svg>
