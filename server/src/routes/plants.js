@@ -54,9 +54,14 @@ plantsRouter.post('/', (req, res) => {
 plantsRouter.patch('/:id', (req, res) => {
   const row = getPlantRow(req.params.id);
   if (!row) return res.status(404).json({ error: 'Pflanze nicht gefunden' });
-  const { name, roomId } = req.body;
+  const { name, roomId, typeId } = req.body;
   if (name !== undefined) db.prepare('UPDATE plants SET name = ? WHERE id = ?').run(name.trim(), row.id);
   if (roomId !== undefined) db.prepare('UPDATE plants SET room_id = ? WHERE id = ?').run(roomId, row.id);
+  if (typeId !== undefined) {
+    const type = db.prepare('SELECT id FROM plant_types WHERE id = ?').get(typeId);
+    if (!type) return res.status(400).json({ error: 'Unbekannte Pflanzenart' });
+    db.prepare('UPDATE plants SET type_id = ? WHERE id = ?').run(typeId, row.id);
+  }
   const plant = getPlantDecorated(row.id);
   broadcast('plant-updated', plant);
   res.json(plant);

@@ -106,6 +106,12 @@ export function AppDataProvider({ children }) {
     setPlants((prev) => prev.filter((p) => p.id !== id));
   }, []);
 
+  const updatePlant = useCallback(async (id, patch) => {
+    const plant = await api.updatePlant(id, patch);
+    applyPlant(plant);
+    return plant;
+  }, [applyPlant]);
+
   const addRoom = useCallback(async (name) => {
     const room = await api.createRoom(name);
     setRooms((prev) => [...prev, room]);
@@ -154,11 +160,11 @@ export function AppDataProvider({ children }) {
   const value = useMemo(() => ({
     plants, rooms, plantTypes, notifications, settings, stickers, week, loading, toast, reward,
     showToast, refreshAll, fixPlant, waterPlant, assignSensor, pairRealSensor, removeSensor,
-    addPlant, removePlant, addRoom, renameRoom, addPhoto, addDiagnosis, healDiagnosis,
+    addPlant, removePlant, updatePlant, addRoom, renameRoom, addPhoto, addDiagnosis, healDiagnosis,
     markNotificationRead, markAllRead, updateSettings
   }), [plants, rooms, plantTypes, notifications, settings, stickers, week, loading, toast, reward,
       showToast, refreshAll, fixPlant, waterPlant, assignSensor, pairRealSensor, removeSensor,
-      addPlant, removePlant, addRoom, renameRoom, addPhoto, addDiagnosis, healDiagnosis,
+      addPlant, removePlant, updatePlant, addRoom, renameRoom, addPhoto, addDiagnosis, healDiagnosis,
       markNotificationRead, markAllRead, updateSettings]);
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;

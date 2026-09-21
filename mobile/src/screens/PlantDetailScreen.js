@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
 import Svg, { Path } from 'react-native-svg';
@@ -43,11 +43,13 @@ function Collapsible({ title, meta, open, onToggle, children }) {
 export function PlantDetailScreen() {
   const navigation = useNavigation();
   const { params } = useRoute();
-  const { plants, fixPlant, removeSensor, removePlant, healDiagnosis, addPhoto, showToast } = useAppData();
+  const { plants, plantTypes, fixPlant, removeSensor, removePlant, updatePlant, healDiagnosis, addPhoto, showToast } = useAppData();
   const plant = plants.find((p) => p.id === params.id);
   const [open, setOpen] = useState({ gallery: false, richtwerte: false, info: false });
   const [readings, setReadings] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [typePickerOpen, setTypePickerOpen] = useState(false);
+  const [typeSearch, setTypeSearch] = useState('');
 
   useEffect(() => {
     if (plant?.hasSensor) {
@@ -73,6 +75,17 @@ export function PlantDetailScreen() {
     if (result.canceled) return;
     await withBusy(() => addPhoto(plant.id, result.assets[0].uri));
   }
+
+  async function changeType(type) {
+    setTypePickerOpen(false);
+    setTypeSearch('');
+    await withBusy(() => updatePlant(plant.id, { typeId: type.id }));
+    showToast(`Art geändert zu ${type.name}.`);
+  }
+
+  const typeResults = plantTypes.filter((t) =>
+    !typeSearch.trim() || t.name.toLowerCase().includes(typeSearch.toLowerCase()) || t.latin.toLowerCase().includes(typeSearch.toLowerCase())
+  );
 
   function confirmRemovePlant() {
     Alert.alert(`${plant.name} entfernen?`, 'Das kann nicht rückgängig gemacht werden.', [
@@ -109,10 +122,35 @@ export function PlantDetailScreen() {
         <Text style={styles.together}>{plant.together}</Text>
       </View>
 
-      <View style={styles.speciesRow}>
+      <Pressable style={styles.speciesRow} onPress={() => setTypePickerOpen((v) => !v)}>
         <Text style={styles.speciesText}>{plant.species}</Text>
         {plant.showMood && <Text style={[styles.moodText, { color: toneColor(plant.tone) }]}>· {plant.moodLabel}</Text>}
-      </View>
+        <Text style={styles.speciesEdit}>· Art ändern</Text>
+      </Pressable>
+
+      {typePickerOpen && (
+        <Card style={{ marginBottom: 16 }}>
+          <View style={styles.searchHead}>
+            <Text style={styles.searchTitle}>Andere Art wählen</Text>
+            <Pressable onPress={() => setTypePickerOpen(false)}><Text style={styles.searchClose}>Schließen</Text></Pressable>
+          </View>
+          <TextInput
+            value={typeSearch} onChangeText={setTypeSearch} placeholder="Art oder Name suchen …"
+            style={styles.searchInput} placeholderTextColor={colors.mut}
+          />
+          <ScrollView style={{ maxHeight: 260 }}>
+            {typeResults.map((t) => (
+              <Pressable key={t.id} onPress={() => changeType(t)} style={[styles.resultRow, t.id === plant.kind && styles.resultRowActive]}>
+                <PlantAvatar kind={t.id} mood="happy" size={40} sway={false} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.resultName}>{t.name}</Text>
+                  <Text style={styles.resultLatin}>{t.latin}</Text>
+                </View>
+              </Pressable>
+            ))}
+          </ScrollView>
+        </Card>
+      )}
 
       {plant.hasAction && (
         <ActionPill label={plant.actionLabel} disabled={busy} onPress={() => withBusy(() => fixPlant(plant.id))} style={{ marginBottom: 20 }} />
@@ -262,9 +300,18 @@ const styles = StyleSheet.create({
   name: { ...baloo(700, 30, { color: colors.ink, letterSpacing: -0.5 }) },
   together: { ...sans(600, 13, { color: colors.mut, marginTop: 2 }) },
   heart: { width: 11, height: 11, borderRadius: 5, transform: [{ rotate: '45deg' }] },
-  speciesRow: { flexDirection: 'row', gap: 8, marginBottom: 16 },
+  speciesRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' },
   speciesText: { ...sans(600, 15, { color: colors.mut, fontStyle: 'italic' }) },
+  speciesEdit: { ...sans(800, 13, { color: colors.acc }) },
   moodText: { ...sans(800, 14) },
+  searchHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+  searchTitle: { ...sans(800, 12.5, { color: colors.ok, textTransform: 'uppercase', letterSpacing: 0.5 }) },
+  searchClose: { ...sans(800, 12.5, { color: colors.mut }) },
+  searchInput: { borderWidth: 1.5, borderColor: colors.line, borderRadius: radius.md, height: 48, paddingHorizontal: 14, ...sans(700, 15, { color: colors.ink }), marginBottom: 10 },
+  resultRow: { flexDirection: 'row', alignItems: 'center', gap: 11, padding: 6, borderRadius: radius.md, marginBottom: 4 },
+  resultRowActive: { backgroundColor: colors.soft },
+  resultName: { ...sans(800, 14.5, { color: colors.ink }) },
+  resultLatin: { ...sans(600, 12, { color: colors.mut, fontStyle: 'italic' }) },
   diagCard: { marginBottom: 18, borderWidth: 1.5, borderColor: 'rgba(192,86,74,0.35)' },
   diagBadge: { flexDirection: 'row', alignItems: 'center', gap: 8, alignSelf: 'flex-start', paddingHorizontal: 12, paddingVertical: 5, borderRadius: radius.pill, backgroundColor: 'rgba(192,86,74,0.12)', marginBottom: 10 },
   diagDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.bad },
