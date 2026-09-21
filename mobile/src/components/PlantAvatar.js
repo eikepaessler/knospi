@@ -17,7 +17,7 @@ const SPECIES = {
   begonia: { form: 'fan', count: 4, w: 0.24, h: 0.34, spread: 40, vein: 'mid', spots: 4, pot: 'band' },
   kingbegonia: { form: 'fan', count: 4, w: 0.27, h: 0.3, spread: 44, vein: 'fan', spots: 3, pot: 'hatch' },
   pilea: { form: 'fan', count: 5, w: 0.2, h: 0.2, spread: 50, round: true, vein: 'fan', pot: 'basket' },
-  monstera: { form: 'fan', count: 3, w: 0.32, h: 0.34, spread: 44, vein: 'mid', slits: 3, pot: 'band' },
+  monstera: { form: 'fan', count: 3, w: 0.36, h: 0.4, spread: 50, droop: 8, vein: 'mid', slits: 3, pot: 'band' },
   strelitzia: { form: 'fan', count: 4, w: 0.19, h: 0.46, spread: 30, vein: 'mid', pot: 'ribbed' },
   pothos: { form: 'fan', count: 5, w: 0.23, h: 0.25, spread: 74, droop: 22, vein: 'mid', pot: 'basket' },
   sansevieria: { form: 'fan', count: 7, w: 0.075, h: 0.62, spread: 22, straight: true, potScale: 0.86, pot: 'legs' },
@@ -67,37 +67,40 @@ function ovalSub(cx, cy, rx, ry) {
   ].join(' ');
 }
 
-// Fensterblatt-Kontur wie bei Monstera: herzfoermige Basis (leichte Kerbe
-// am Stielansatz), breite runde Lappen statt spitzem Zickzack, und echte
-// Locher im Blatt selbst - nicht nur Randeinschnitte. Die Locher sind ein
-// zweiter Teilpfad im selben <Path>, der per fillRule="evenodd" transparent
-// bleibt und dadurch zu jedem Hintergrund passt.
+// Fensterblatt-Kontur wie bei Monstera: eine glatte, ovale/herzfoermige
+// Silhouette (KEIN gelapptes/gezacktes Randmuster - echte Monstera-
+// Illustrationen zeigen einen ruhigen Rand) mit einer Kerbe an der Basis,
+// und mehreren echten Lochreihen entlang der Mittelrippe - genau das macht
+// das Blatt erkennbar, nicht die Randform. Die Locher sind ein zweiter
+// Teilpfad im selben <Path>, der per fillRule="evenodd" transparent bleibt
+// und sich dadurch an jeden Hintergrund anpasst.
 function monsteraLeafPath(rx, ry) {
-  // Herzfoermige Basis: eine Kerbe in der Mitte (Stielansatz), die zu
-  // beiden Seiten zu je einem runden Lappen ausschwingt, bevor es an den
-  // Seiten hoch zur Spitze weitergeht.
-  const notchY = ry * 0.6;
+  const notchY = ry * 0.68;
   const outline = [
     `M 0 ${notchY}`,
-    `Q ${rx * 0.06} ${ry * 0.95} ${rx * 0.4} ${ry * 1.05}`,
-    `Q ${rx * 0.78} ${ry * 1.12} ${rx * 0.86} ${ry * 0.62}`,
-    `Q ${rx * 1.1} ${ry * 0.42} ${rx * 0.88} ${ry * 0.02}`,
-    `Q ${rx * 0.5} ${-ry * 0.12} ${rx * 0.7} ${-ry * 0.45}`,
-    `Q ${rx * 1.0} ${-ry * 0.62} ${rx * 0.58} ${-ry * 0.9}`,
-    `Q ${rx * 0.3} ${-ry * 1.07} 0 ${-ry}`,
-    `Q ${-rx * 0.3} ${-ry * 1.07} ${-rx * 0.58} ${-ry * 0.9}`,
-    `Q ${-rx * 1.0} ${-ry * 0.62} ${-rx * 0.7} ${-ry * 0.45}`,
-    `Q ${-rx * 0.5} ${-ry * 0.12} ${-rx * 0.88} ${ry * 0.02}`,
-    `Q ${-rx * 1.1} ${ry * 0.42} ${-rx * 0.86} ${ry * 0.62}`,
-    `Q ${-rx * 0.78} ${ry * 1.12} ${-rx * 0.4} ${ry * 1.05}`,
-    `Q ${-rx * 0.06} ${ry * 0.95} 0 ${notchY}`,
+    `Q ${rx * 0.16} ${ry * 1.06} ${rx * 0.56} ${ry * 0.9}`,
+    `Q ${rx * 1.08} ${ry * 0.68} ${rx * 0.94} ${ry * 0.02}`,
+    `Q ${rx * 0.84} ${-ry * 0.55} ${rx * 0.4} ${-ry * 0.93}`,
+    `Q ${rx * 0.16} ${-ry * 1.07} 0 ${-ry}`,
+    `Q ${-rx * 0.16} ${-ry * 1.07} ${-rx * 0.4} ${-ry * 0.93}`,
+    `Q ${-rx * 0.84} ${-ry * 0.55} ${-rx * 0.94} ${ry * 0.02}`,
+    `Q ${-rx * 1.08} ${ry * 0.68} ${-rx * 0.56} ${ry * 0.9}`,
+    `Q ${-rx * 0.16} ${ry * 1.06} 0 ${notchY}`,
     'Z'
   ].join(' ');
-  const holes = [
-    ovalSub(rx * 0.4, -ry * 0.12, rx * 0.16, ry * 0.26),
-    ovalSub(-rx * 0.4, ry * 0.22, rx * 0.14, ry * 0.22),
-    ovalSub(rx * 0.32, -ry * 0.62, rx * 0.11, ry * 0.17)
-  ].join(' ');
+
+  // Vier gestaffelte Hoehen, an jeder ein Lochpaar links/rechts der
+  // Mittelrippe (leicht versetzt fuer eine natuerlichere, asymmetrische
+  // Anordnung) - so wie bei einer echten Monstera.
+  const rows = [0.58, 0.28, -0.05, -0.4];
+  const holes = rows.flatMap((t, idx) => {
+    const y = ry * t;
+    const shrink = 1 - idx * 0.12;
+    const hw = rx * 0.26 * shrink, hh = ry * 0.19 * shrink;
+    const xOff = rx * (0.4 + (idx % 2) * 0.04);
+    return [ovalSub(xOff, y, hw, hh), ovalSub(-xOff, y - ry * 0.09, hw * 0.9, hh * 0.9)];
+  }).join(' ');
+
   return `${outline} ${holes}`;
 }
 
