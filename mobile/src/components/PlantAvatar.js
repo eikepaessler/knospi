@@ -15,25 +15,25 @@ const PAPER = '#FFFDF7';
 
 const SPECIES = {
   begonia: { form: 'fan', count: 4, w: 0.24, h: 0.34, spread: 40, vein: 'mid', spots: 4, pot: 'band' },
-  kingbegonia: { form: 'fan', count: 4, w: 0.27, h: 0.3, spread: 44, vein: 'fan', spots: 3, pot: 'hatch' },
-  pilea: { form: 'fan', count: 5, w: 0.22, h: 0.22, spread: 46, round: true, vein: 'fan', pot: 'basket', stemMul: 3.2 },
+  kingbegonia: { form: 'fan', count: 4, w: 0.27, h: 0.3, spread: 44, vein: 'fan', spots: 3, pot: 'hatch', stemHeight: 0.2 },
+  pilea: { form: 'fan', count: 5, w: 0.22, h: 0.22, spread: 46, round: true, vein: 'fan', pot: 'basket', stemMul: 2.4, lift: 0.14 },
   monstera: { form: 'fan', count: 3, w: 0.34, h: 0.38, spread: 46, droop: 6, vein: 'mid', slits: 3, pot: 'band', stemHeight: 0.24 },
-  strelitzia: { form: 'fan', count: 4, w: 0.19, h: 0.46, spread: 30, vein: 'mid', pot: 'ribbed' },
-  pothos: { form: 'fan', count: 5, w: 0.23, h: 0.25, spread: 74, droop: 22, vein: 'mid', pot: 'basket' },
+  strelitzia: { form: 'fan', count: 4, w: 0.19, h: 0.46, spread: 30, vein: 'mid', pot: 'ribbed', stemMul: 2.2, lift: 0.16 },
+  pothos: { form: 'fan', count: 5, w: 0.23, h: 0.25, spread: 74, droop: 22, vein: 'mid', pot: 'basket', stemHeight: 0.14 },
   sansevieria: { form: 'fan', count: 7, w: 0.075, h: 0.62, spread: 22, straight: true, potScale: 0.86, pot: 'legs' },
-  coffee: { form: 'fan', count: 5, w: 0.17, h: 0.3, spread: 46, vein: 'mid', berries: true, pot: 'band' },
-  rubber: { form: 'fan', count: 4, w: 0.24, h: 0.38, spread: 34, vein: 'mid', pot: 'hatch' },
+  coffee: { form: 'fan', count: 5, w: 0.17, h: 0.3, spread: 46, vein: 'mid', berries: true, pot: 'band', stemHeight: 0.16 },
+  rubber: { form: 'fan', count: 4, w: 0.24, h: 0.38, spread: 34, vein: 'mid', pot: 'hatch', stemHeight: 0.2 },
   fern: { form: 'fan', count: 5, w: 0.11, h: 0.48, spread: 50, vein: 'mid', comb: 3, pot: 'legs' },
   bamboo: { form: 'bamboo', potScale: 0.82, pot: 'ribbed' },
   bonsai: { form: 'bonsai', potScale: 1.06, pot: 'band' },
   cactus: { form: 'cactus', potScale: 0.9, pot: 'bowl' },
   fiddleleaf: { form: 'fan', count: 3, w: 0.34, h: 0.4, spread: 34, vein: 'mid', pot: 'band' },
   aloe: { form: 'fan', count: 5, w: 0.14, h: 0.5, spread: 26, straight: true, pot: 'bowl' },
-  ivy: { form: 'fan', count: 6, w: 0.15, h: 0.16, spread: 60, round: true, droop: 14, pot: 'basket' },
-  orchid: { form: 'fan', count: 4, w: 0.16, h: 0.4, spread: 30, straight: true, pot: 'band' },
+  ivy: { form: 'fan', count: 6, w: 0.15, h: 0.16, spread: 60, round: true, droop: 14, pot: 'basket', stemHeight: 0.22, stemMul: 1.6 },
+  orchid: { form: 'fan', count: 4, w: 0.16, h: 0.4, spread: 30, straight: true, pot: 'band', bloom: true },
   calathea: { form: 'fan', count: 3, w: 0.3, h: 0.32, spread: 40, vein: 'fan', pot: 'basket' },
-  alocasia: { form: 'fan', count: 3, w: 0.34, h: 0.4, spread: 38, vein: 'mid', pot: 'hatch' },
-  philodendron: { form: 'fan', count: 5, w: 0.2, h: 0.22, spread: 70, droop: 20, vein: 'mid', pot: 'basket' },
+  alocasia: { form: 'fan', count: 3, w: 0.34, h: 0.4, spread: 38, vein: 'mid', pot: 'hatch', stemMul: 1.8, lift: 0.12 },
+  philodendron: { form: 'fan', count: 5, w: 0.2, h: 0.22, spread: 70, droop: 20, vein: 'mid', pot: 'basket', stemHeight: 0.1 },
   yucca: { form: 'fan', count: 8, w: 0.065, h: 0.58, spread: 26, straight: true, potScale: 0.9, pot: 'hatch' },
   dracaena: { form: 'fan', count: 6, w: 0.09, h: 0.5, spread: 36, vein: 'mid', pot: 'ribbed' },
   areca: { form: 'fan', count: 5, w: 0.13, h: 0.5, spread: 46, vein: 'mid', comb: 4, pot: 'legs' },
@@ -41,10 +41,10 @@ const SPECIES = {
   fittonia: { form: 'fan', count: 6, w: 0.14, h: 0.14, spread: 55, round: true, vein: 'fan', pot: 'bowl' },
   peacelily: { form: 'fan', count: 4, w: 0.2, h: 0.36, spread: 34, vein: 'mid', pot: 'band' },
   anthurium: { form: 'fan', count: 3, w: 0.26, h: 0.32, spread: 34, vein: 'mid', pot: 'hatch' },
-  umbrella: { form: 'fan', count: 6, w: 0.14, h: 0.22, spread: 50, vein: 'fan', pot: 'ribbed' },
+  umbrella: { form: 'fan', count: 6, w: 0.14, h: 0.22, spread: 50, vein: 'fan', pot: 'ribbed', stemMul: 2.2, lift: 0.12 },
   spiderplant: { form: 'fan', count: 8, w: 0.065, h: 0.46, spread: 42, vein: 'mid', pot: 'legs' },
-  jade: { form: 'fan', count: 5, w: 0.14, h: 0.16, spread: 50, round: true, pot: 'bowl' },
-  chainheart: { form: 'fan', count: 6, w: 0.1, h: 0.11, spread: 65, round: true, droop: 26, pot: 'basket' },
+  jade: { form: 'fan', count: 5, w: 0.14, h: 0.16, spread: 50, round: true, pot: 'bowl', stemHeight: 0.14 },
+  chainheart: { form: 'fan', count: 6, w: 0.1, h: 0.11, spread: 65, round: true, droop: 26, pot: 'basket', lift: 0.18 },
   generic: { form: 'fan', count: 3, w: 0.27, h: 0.42, spread: 36, vein: 'mid', pot: 'band' }
 };
 
@@ -276,6 +276,34 @@ function Cactus({ s }) {
   );
 }
 
+// Orchideen-Bluetenrispe: ein duenner, leicht gebogener Stiel seitlich der
+// Blaetter mit ein paar kleinen, offenen Bluetenkoepfen daran - ohne sie ist
+// eine Orchideen-Illustration nur ein Buendel Schwertblaetter und nicht als
+// Orchidee erkennbar.
+function Bloom({ s }) {
+  const lineW = Math.max(0.7, s * 0.008);
+  const stemPath = `M ${s * 0.02} 0 C ${s * 0.05} ${-s * 0.16}, ${s * 0.02} ${-s * 0.3}, ${s * 0.12} ${-s * 0.46}`;
+  const flowers = [
+    { x: s * 0.13, y: -s * 0.47, r: s * 0.055 },
+    { x: s * 0.08, y: -s * 0.39, r: s * 0.048 },
+    { x: s * 0.15, y: -s * 0.3, r: s * 0.042 }
+  ];
+  return (
+    <G>
+      <Path d={stemPath} stroke={INK} strokeWidth={lineW} fill="none" strokeLinecap="round" />
+      {flowers.map((f, i) => (
+        <G key={i} transform={`translate(${f.x} ${f.y})`}>
+          {[0, 72, 144, 216, 288].map((ang) => (
+            <Ellipse key={ang} cx={0} cy={-f.r * 0.9} rx={f.r * 0.48} ry={f.r * 0.85} fill={PAPER} stroke={INK}
+              strokeWidth={lineW * 0.8} transform={`rotate(${ang})`} />
+          ))}
+          <Circle cx={0} cy={0} r={f.r * 0.3} fill={BLUSH} />
+        </G>
+      ))}
+    </G>
+  );
+}
+
 // Fuenf Topf-Stile statt einer einzigen Universalform, damit eine Sammlung
 // nicht wie ein Topf mit vielen Pflanzen wirkt: band (schlichte Zierlinie),
 // ribbed (gefurchte Keramik), hatch (schraffierter Farbverlauf), basket
@@ -417,6 +445,13 @@ export function PlantAvatar({ kind = 'generic', mood = 'happy', size = 96, sway 
   // gleich gross und wirkt trotzdem, als schwebe sie ueber dem Topf. Je
   // kleiner der Topf, desto staerker zusaetzlich absenken.
   const anchorRatio = 0.68 - (1 - potScale) * 1.6;
+  // Die Schale (pot: 'bowl') ist viel flacher als ein normaler Topf - ihre
+  // sichtbare Oberkante liegt bei top*0.55, nicht bei top (siehe Pot()).
+  // Ohne diese Korrektur haengt die Pflanze mit sichtbarem Abstand ueber
+  // der Schale, weil der Anker sich an der (viel hoeheren) Kontur eines
+  // normalen Topfes orientiert.
+  const rimFactor = sp.pot === 'bowl' ? 0.55 : 1;
+  const anchorY = -(potH * rimFactor * anchorRatio);
 
   return (
     <View style={[{ width: s, height: s, alignItems: 'center', justifyContent: 'center' }, style]}>
@@ -428,15 +463,21 @@ export function PlantAvatar({ kind = 'generic', mood = 'happy', size = 96, sway 
           {/* Pflanzenbasis deutlich unter dem Rand ansetzen, nicht nur knapp
               daran - sonst wirkt es, als schwebe die Pflanze ueber dem Topf
               statt darin zu stecken. Gilt fuer alle Topfgroessen gleich. */}
-          <G transform={`translate(0 ${-(potH * anchorRatio)})`}>
+          <G transform={`translate(0 ${anchorY})`}>
             {!!sp.stemHeight && (
               <Line x1={0} y1={0} x2={0} y2={-s * sp.stemHeight} stroke={INK} strokeWidth={Math.max(1.4, s * 0.02)} strokeLinecap="round" />
             )}
-            <G transform={`translate(0 ${-s * (sp.stemHeight || 0)})`}>
+            {/* lift: hebt die Blattgruppe wie stemHeight an, aber OHNE eine
+                Stamm-Linie zu zeichnen - fuer Arten mit mehreren duennen
+                Einzelstielen statt einem gemeinsamen Stamm (z.B. Pfeilblatt,
+                Strelizie, Ufopflanze), deren eigene, pro Blatt gezeichnete
+                Stiele sonst komplett unter dem Topfrand verschwinden. */}
+            <G transform={`translate(0 ${-s * ((sp.stemHeight || 0) + (sp.lift || 0))})`}>
               {sp.form === 'fan' && <Fan s={s} sp={sp} />}
               {sp.form === 'bamboo' && <Bamboo s={s} />}
               {sp.form === 'bonsai' && <Bonsai s={s} />}
               {sp.form === 'cactus' && <Cactus s={s} />}
+              {!!sp.bloom && <Bloom s={s} />}
             </G>
           </G>
 
