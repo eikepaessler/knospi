@@ -129,7 +129,7 @@ export function AddPlantScreen() {
         </View>
 
         <View style={styles.matchCard}>
-          <PlantAvatar kind={match.type.kind} mood="happy" size={90} />
+          <PlantAvatar kind={match.type.id} mood="happy" size={90} />
           <View style={{ flex: 1 }}>
             {match.confidence != null && (
               <View style={styles.matchBadge}><Text style={styles.matchBadgeText}>{match.confidence}% sicher</Text></View>
@@ -156,7 +156,7 @@ export function AddPlantScreen() {
             <ScrollView style={{ maxHeight: 260 }}>
               {results.map((r) => (
                 <Pressable key={r.id} onPress={() => pickType(r)} style={[styles.resultRow, r.id === match.type.id && styles.resultRowActive]}>
-                  <PlantAvatar kind={r.kind} mood="happy" size={40} sway={false} />
+                  <PlantAvatar kind={r.id} mood="happy" size={40} sway={false} />
                   <View style={{ flex: 1 }}>
                     <Text style={styles.resultName}>{r.name}</Text>
                     <Text style={styles.resultLatin}>{r.latin}</Text>

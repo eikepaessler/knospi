@@ -2,58 +2,88 @@ import { useEffect, useRef } from 'react';
 import { Animated, Easing, View } from 'react-native';
 import Svg, { Circle, Ellipse, G, Line, Path } from 'react-native-svg';
 
-// Outline-Illustrationen je SpeciesKind, nachgebaut aus PlantAvatar.dc.html:
-// 2-3px Tintenkontur, cremeweisse Fuellung, keine Farbflaechen. Jede Art
-// besteht aus einem Blaetter-Faecher (die meisten Arten), oder einer der
-// drei Sonderformen (Bambus, Bonsai, Kaktus).
+// Botanische Feder-Skizzen im Stil von Vintage-Pflanzen-Illustrationen:
+// duenne Tuschlinien, verzweigte Blattadern, spitze Blattformen, volle
+// Buendel statt symmetrischer Faecher, dazu ein niedliches, dick gezeichnetes
+// Gesicht als Kontrast obendrauf. Jede Art besteht aus einem Blaetter-Buendel
+// (die meisten Arten) oder einer der drei Sonderformen (Bambus, Bonsai,
+// Kaktus). Der Topf ist eine von fuenf Stil-Varianten (band/ribbed/hatch/
+// basket/legs/bowl), damit die Sammlung nicht wie ein einziger Topf mit
+// vielen Pflanzen wirkt.
 const INK = '#1D2418';
 const PAPER = '#FFFDF7';
 
 const SPECIES = {
-  begonia: { form: 'fan', count: 4, w: 0.24, h: 0.34, spread: 40, vein: 'mid', spots: 4 },
-  kingbegonia: { form: 'fan', count: 4, w: 0.27, h: 0.3, spread: 44, vein: 'fan', spots: 3 },
-  pilea: { form: 'fan', count: 5, w: 0.2, h: 0.2, spread: 50, round: true, vein: 'fan' },
-  monstera: { form: 'fan', count: 3, w: 0.32, h: 0.34, spread: 44, vein: 'mid', slits: 3 },
-  strelitzia: { form: 'fan', count: 4, w: 0.19, h: 0.46, spread: 30, vein: 'mid' },
-  pothos: { form: 'fan', count: 5, w: 0.23, h: 0.25, spread: 74, droop: 22, vein: 'mid' },
-  sansevieria: { form: 'fan', count: 5, w: 0.1, h: 0.62, spread: 20, straight: true, potScale: 0.86 },
-  coffee: { form: 'fan', count: 5, w: 0.17, h: 0.3, spread: 46, vein: 'mid', berries: true },
-  rubber: { form: 'fan', count: 4, w: 0.24, h: 0.38, spread: 34, vein: 'mid' },
-  fern: { form: 'fan', count: 5, w: 0.12, h: 0.48, spread: 50, vein: 'mid', comb: 4 },
-  bamboo: { form: 'bamboo', potScale: 0.82 },
-  bonsai: { form: 'bonsai', potScale: 1.06 },
-  cactus: { form: 'cactus', potScale: 0.9 },
-  fiddleleaf: { form: 'fan', count: 3, w: 0.34, h: 0.4, spread: 34, vein: 'mid' },
-  aloe: { form: 'fan', count: 5, w: 0.14, h: 0.5, spread: 26, straight: true },
-  ivy: { form: 'fan', count: 6, w: 0.15, h: 0.16, spread: 60, round: true, droop: 14 },
-  orchid: { form: 'fan', count: 4, w: 0.16, h: 0.4, spread: 30, straight: true },
-  calathea: { form: 'fan', count: 3, w: 0.3, h: 0.32, spread: 40, vein: 'fan' },
-  alocasia: { form: 'fan', count: 3, w: 0.34, h: 0.4, spread: 38, vein: 'mid' },
-  philodendron: { form: 'fan', count: 5, w: 0.2, h: 0.22, spread: 70, droop: 20, vein: 'mid' },
-  yucca: { form: 'fan', count: 6, w: 0.08, h: 0.58, spread: 24, straight: true, potScale: 0.9 },
-  dracaena: { form: 'fan', count: 5, w: 0.1, h: 0.5, spread: 34, vein: 'mid' },
-  areca: { form: 'fan', count: 4, w: 0.14, h: 0.5, spread: 46, vein: 'mid', comb: 5 },
-  zz: { form: 'fan', count: 5, w: 0.16, h: 0.28, spread: 44, vein: 'mid' },
-  fittonia: { form: 'fan', count: 6, w: 0.14, h: 0.14, spread: 55, round: true, vein: 'fan' },
-  peacelily: { form: 'fan', count: 4, w: 0.2, h: 0.36, spread: 34, vein: 'mid' },
-  anthurium: { form: 'fan', count: 3, w: 0.26, h: 0.32, spread: 34, vein: 'mid' },
-  umbrella: { form: 'fan', count: 6, w: 0.14, h: 0.22, spread: 50, vein: 'fan' },
-  spiderplant: { form: 'fan', count: 6, w: 0.08, h: 0.46, spread: 40, vein: 'mid' },
-  jade: { form: 'fan', count: 5, w: 0.14, h: 0.16, spread: 50, round: true },
-  chainheart: { form: 'fan', count: 6, w: 0.1, h: 0.11, spread: 65, round: true, droop: 26 },
-  generic: { form: 'fan', count: 3, w: 0.27, h: 0.42, spread: 36, vein: 'mid' }
+  begonia: { form: 'fan', count: 4, w: 0.24, h: 0.34, spread: 40, vein: 'mid', spots: 4, pot: 'band' },
+  kingbegonia: { form: 'fan', count: 4, w: 0.27, h: 0.3, spread: 44, vein: 'fan', spots: 3, pot: 'hatch' },
+  pilea: { form: 'fan', count: 5, w: 0.2, h: 0.2, spread: 50, round: true, vein: 'fan', pot: 'basket' },
+  monstera: { form: 'fan', count: 3, w: 0.32, h: 0.34, spread: 44, vein: 'mid', slits: 3, pot: 'band' },
+  strelitzia: { form: 'fan', count: 4, w: 0.19, h: 0.46, spread: 30, vein: 'mid', pot: 'ribbed' },
+  pothos: { form: 'fan', count: 5, w: 0.23, h: 0.25, spread: 74, droop: 22, vein: 'mid', pot: 'basket' },
+  sansevieria: { form: 'fan', count: 7, w: 0.075, h: 0.62, spread: 22, straight: true, potScale: 0.86, pot: 'legs' },
+  coffee: { form: 'fan', count: 5, w: 0.17, h: 0.3, spread: 46, vein: 'mid', berries: true, pot: 'band' },
+  rubber: { form: 'fan', count: 4, w: 0.24, h: 0.38, spread: 34, vein: 'mid', pot: 'hatch' },
+  fern: { form: 'fan', count: 7, w: 0.1, h: 0.48, spread: 54, vein: 'mid', comb: 5, pot: 'legs' },
+  bamboo: { form: 'bamboo', potScale: 0.82, pot: 'ribbed' },
+  bonsai: { form: 'bonsai', potScale: 1.06, pot: 'band' },
+  cactus: { form: 'cactus', potScale: 0.9, pot: 'bowl' },
+  fiddleleaf: { form: 'fan', count: 3, w: 0.34, h: 0.4, spread: 34, vein: 'mid', pot: 'band' },
+  aloe: { form: 'fan', count: 5, w: 0.14, h: 0.5, spread: 26, straight: true, pot: 'bowl' },
+  ivy: { form: 'fan', count: 6, w: 0.15, h: 0.16, spread: 60, round: true, droop: 14, pot: 'basket' },
+  orchid: { form: 'fan', count: 4, w: 0.16, h: 0.4, spread: 30, straight: true, pot: 'band' },
+  calathea: { form: 'fan', count: 3, w: 0.3, h: 0.32, spread: 40, vein: 'fan', pot: 'basket' },
+  alocasia: { form: 'fan', count: 3, w: 0.34, h: 0.4, spread: 38, vein: 'mid', pot: 'hatch' },
+  philodendron: { form: 'fan', count: 5, w: 0.2, h: 0.22, spread: 70, droop: 20, vein: 'mid', pot: 'basket' },
+  yucca: { form: 'fan', count: 8, w: 0.065, h: 0.58, spread: 26, straight: true, potScale: 0.9, pot: 'hatch' },
+  dracaena: { form: 'fan', count: 6, w: 0.09, h: 0.5, spread: 36, vein: 'mid', pot: 'ribbed' },
+  areca: { form: 'fan', count: 6, w: 0.12, h: 0.5, spread: 48, vein: 'mid', comb: 6, pot: 'legs' },
+  zz: { form: 'fan', count: 5, w: 0.16, h: 0.28, spread: 44, vein: 'mid', pot: 'band' },
+  fittonia: { form: 'fan', count: 6, w: 0.14, h: 0.14, spread: 55, round: true, vein: 'fan', pot: 'bowl' },
+  peacelily: { form: 'fan', count: 4, w: 0.2, h: 0.36, spread: 34, vein: 'mid', pot: 'band' },
+  anthurium: { form: 'fan', count: 3, w: 0.26, h: 0.32, spread: 34, vein: 'mid', pot: 'hatch' },
+  umbrella: { form: 'fan', count: 6, w: 0.14, h: 0.22, spread: 50, vein: 'fan', pot: 'ribbed' },
+  spiderplant: { form: 'fan', count: 8, w: 0.065, h: 0.46, spread: 42, vein: 'mid', pot: 'legs' },
+  jade: { form: 'fan', count: 5, w: 0.14, h: 0.16, spread: 50, round: true, pot: 'bowl' },
+  chainheart: { form: 'fan', count: 6, w: 0.1, h: 0.11, spread: 65, round: true, droop: 26, pot: 'basket' },
+  generic: { form: 'fan', count: 3, w: 0.27, h: 0.42, spread: 36, vein: 'mid', pot: 'band' }
 };
+
+// Deterministischer, sanfter "Handzeichnungs"-Jitter je Blattindex - keine
+// echte Zufallszahl, damit dieselbe Art bei jedem Rendern gleich aussieht.
+function jitter(i, amp) {
+  return Math.sin(i * 2.61 + 0.7) * amp;
+}
 
 function Leaf({ s, angle, w, h, stemLen, sp, i }) {
   const rx = w / 2, ry = h / 2;
+  const lineW = Math.max(0.7, s * 0.008);
   const inner = [];
+
+  if (!sp.round) {
+    // Mittelrippe
+    inner.push(<Path key="rib" d={`M 0 ${ry * 0.86} L 0 ${-ry * 0.9}`} stroke={INK} strokeWidth={lineW} strokeLinecap="round" />);
+  }
   if (sp.vein === 'mid') {
-    inner.push(<Line key="rib" x1={0} y1={-ry * 0.8} x2={0} y2={ry * 0.75} stroke={INK} strokeWidth={s * 0.014} strokeLinecap="round" />);
+    const count = h > s * 0.32 ? 4 : 3;
+    for (let k = 1; k <= count; k++) {
+      const t = k / (count + 1);
+      const y = ry * 0.68 - t * ry * 1.5;
+      const len = rx * (0.62 - t * 0.16);
+      [-1, 1].forEach((dir) => inner.push(
+        <Path key={`v${k}${dir}`} d={`M 0 ${y} L ${dir * len} ${y - ry * 0.22}`} stroke={INK} strokeWidth={lineW * 0.85} strokeLinecap="round" />
+      ));
+    }
   }
   if (sp.vein === 'fan') {
-    [-26, 0, 26].forEach((va, vi) => inner.push(
-      <Line key={'v' + vi} x1={0} y1={ry * 0.8} x2={ry * 0.62 * Math.sin((va * Math.PI) / 180)} y2={ry * 0.8 - ry * 0.62 * Math.cos((va * Math.PI) / 180)}
-        stroke={INK} strokeWidth={s * 0.012} strokeLinecap="round" />
+    [-30, -12, 12, 30].forEach((va, vi) => inner.push(
+      <Line key={'v' + vi} x1={0} y1={ry * 0.82} x2={ry * 0.68 * Math.sin((va * Math.PI) / 180)} y2={ry * 0.82 - ry * 0.68 * Math.cos((va * Math.PI) / 180)}
+        stroke={INK} strokeWidth={lineW * 0.8} strokeLinecap="round" />
+    ));
+  }
+  if (sp.straight) {
+    // Schwertblatt: Mittelrippe + 2 duenne Seitenadern
+    [-1, 1].forEach((dir) => inner.push(
+      <Path key={'sw' + dir} d={`M 0 ${ry * 0.7} L ${dir * rx * 0.35} ${-ry * 0.7}`} stroke={INK} strokeWidth={lineW * 0.7} strokeLinecap="round" opacity={0.7} />
     ));
   }
   if (sp.slits) {
@@ -61,40 +91,40 @@ function Leaf({ s, angle, w, h, stemLen, sp, i }) {
       const y = -ry * 0.5 + k * (ry * 0.5);
       [-1, 1].forEach((dir) => inner.push(
         <Line key={'sl' + k + dir} x1={dir * rx * 0.95} y1={y} x2={dir * rx * 0.35} y2={y + ry * 0.16}
-          stroke={INK} strokeWidth={s * 0.013} strokeLinecap="round" />
+          stroke={INK} strokeWidth={lineW} strokeLinecap="round" />
       ));
     }
   }
   if (sp.comb) {
     for (let k = 0; k < sp.comb; k++) {
-      const y = -ry * 0.75 + k * (ry * 1.4 / sp.comb);
+      const y = -ry * 0.78 + k * (ry * 1.5 / sp.comb);
       [-1, 1].forEach((dir) => inner.push(
-        <Line key={'c' + k + dir} x1={0} y1={y} x2={dir * rx * 0.85} y2={y + ry * 0.12}
-          stroke={INK} strokeWidth={s * 0.011} strokeLinecap="round" />
+        <Line key={'c' + k + dir} x1={0} y1={y} x2={dir * rx * 0.9} y2={y + ry * 0.1}
+          stroke={INK} strokeWidth={lineW * 0.8} strokeLinecap="round" />
       ));
     }
   }
   if (sp.spots) {
     for (let k = 0; k < sp.spots; k++) {
-      inner.push(<Circle key={'sp' + k} cx={(k % 2 ? 1 : -1) * rx * 0.32} cy={-ry * 0.3 + k * ry * 0.28} r={Math.max(1.2, w * 0.05)} fill={INK} />);
+      inner.push(<Circle key={'sp' + k} cx={(k % 2 ? 1 : -1) * rx * 0.32} cy={-ry * 0.3 + k * ry * 0.28} r={Math.max(1, w * 0.045)} fill={INK} opacity={0.85} />);
     }
   }
   if (sp.berries && i === 1) {
-    inner.push(<Circle key="berry" cx={rx * 0.5} cy={ry * 0.6} r={Math.max(1.6, w * 0.07)} fill={PAPER} stroke={INK} strokeWidth={s * 0.012} />);
+    inner.push(<Circle key="berry" cx={rx * 0.5} cy={ry * 0.6} r={Math.max(1.4, w * 0.06)} fill={PAPER} stroke={INK} strokeWidth={lineW} />);
   }
 
   const shape = sp.round
-    ? <Circle cx={0} cy={0} r={rx} fill={PAPER} stroke={INK} strokeWidth={s * 0.018} />
+    ? <Circle cx={0} cy={0} r={rx} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} />
     : sp.straight
-      ? <Path d={`M ${-rx} ${ry} L ${-rx * 0.7} ${-ry} L ${rx * 0.7} ${-ry} L ${rx} ${ry} Z`} fill={PAPER} stroke={INK} strokeWidth={s * 0.018} strokeLinejoin="round" />
+      ? <Path d={`M ${-rx * 0.62} ${ry} Q ${-rx} ${ry * 0.1} 0 ${-ry} Q ${rx} ${ry * 0.1} ${rx * 0.62} ${ry} Z`} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round" />
       : <Path
-          d={`M 0 ${ry} C ${-rx * 1.15} ${ry * 0.35}, ${-rx * 0.85} ${-ry * 0.85}, 0 ${-ry} C ${rx * 0.85} ${-ry * 0.85}, ${rx * 1.15} ${ry * 0.35}, 0 ${ry} Z`}
-          fill={PAPER} stroke={INK} strokeWidth={s * 0.018} strokeLinejoin="round"
+          d={`M 0 ${ry} C ${-rx * 1.18} ${ry * 0.4}, ${-rx * 0.82} ${-ry * 0.82}, 0 ${-ry} C ${rx * 0.82} ${-ry * 0.82}, ${rx * 1.18} ${ry * 0.4}, 0 ${ry} Z`}
+          fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round"
         />;
 
   return (
     <G transform={`rotate(${angle})`}>
-      {stemLen > 0 && <Line x1={0} y1={0} x2={0} y2={-stemLen} stroke={INK} strokeWidth={s * 0.018} strokeLinecap="round" />}
+      {stemLen > 0 && <Line x1={0} y1={0} x2={0} y2={-stemLen} stroke={INK} strokeWidth={lineW * 1.2} strokeLinecap="round" />}
       <G transform={`translate(0 ${-(stemLen + ry)})`}>{shape}{inner}</G>
     </G>
   );
@@ -105,10 +135,11 @@ function Fan({ s, sp }) {
   const angles = n === 1 ? [0] : Array.from({ length: n }, (_, i) => -sp.spread + (2 * sp.spread * i) / (n - 1));
   return angles.map((a, i) => {
     const mid = n % 2 === 1 && i === Math.floor(n / 2);
-    const grow = mid ? 1.1 : Math.abs(a) > sp.spread * 0.8 ? 0.9 : 1;
-    const w = s * sp.w * grow, h = s * sp.h * grow;
+    const edge = Math.abs(a) > sp.spread * 0.8;
+    const grow = (mid ? 1.12 : edge ? 0.86 : 1) + jitter(i, 0.05);
+    const w = s * sp.w * grow, h = s * sp.h * grow * (1 + jitter(i + 5, 0.06));
     const stemLen = s * 0.05 * grow;
-    const rot = a + (sp.droop ? (a / sp.spread) * sp.droop : 0);
+    const rot = a + (sp.droop ? (a / sp.spread) * sp.droop : 0) + jitter(i, 2.4);
     return <Leaf key={i} s={s} i={i} angle={rot} w={w} h={h} stemLen={stemLen} sp={sp} />;
   });
 }
@@ -119,20 +150,21 @@ function Bamboo({ s }) {
     { x: 0, h: s * 0.6, rot: 0 },
     { x: s * 0.11, h: s * 0.44, rot: 6 }
   ];
+  const lineW = Math.max(0.7, s * 0.008);
   return canes.map((c, i) => {
-    const cw = Math.max(2.4, s * 0.05);
-    const nodes = [1, 2, 3].map((k) => <Line key={k} x1={-cw / 2} y1={-c.h * (k / 4)} x2={cw / 2} y2={-c.h * (k / 4)} stroke={INK} strokeWidth={s * 0.012} />);
+    const cw = Math.max(2, s * 0.038);
+    const nodes = [1, 2, 3].map((k) => <Line key={k} x1={-cw / 2} y1={-c.h * (k / 4)} x2={cw / 2} y2={-c.h * (k / 4)} stroke={INK} strokeWidth={lineW} />);
     const leaves = [0.34, 0.62].map((at, li) => {
       const dir = (i + li) % 2 ? 1 : -1;
       const y = -c.h * at;
       return (
-        <Path key={li} d={`M 0 ${y} Q ${dir * s * 0.11} ${y - s * 0.02} ${dir * s * 0.13} ${y + s * 0.015}`} stroke={INK} strokeWidth={s * 0.014} fill="none" strokeLinecap="round" />
+        <Path key={li} d={`M 0 ${y} Q ${dir * s * 0.11} ${y - s * 0.02} ${dir * s * 0.13} ${y + s * 0.015}`} stroke={INK} strokeWidth={lineW} fill="none" strokeLinecap="round" />
       );
     });
     return (
       <G key={i} transform={`translate(${c.x} 0) rotate(${c.rot})`}>
         <Line x1={0} y1={0} x2={0} y2={-c.h} stroke={INK} strokeWidth={cw} strokeLinecap="round" />
-        <Line x1={0} y1={0} x2={0} y2={-c.h} stroke={PAPER} strokeWidth={cw - s * 0.02} strokeLinecap="round" />
+        <Line x1={0} y1={0} x2={0} y2={-c.h} stroke={PAPER} strokeWidth={cw - s * 0.015} strokeLinecap="round" />
         {nodes}{leaves}
       </G>
     );
@@ -140,40 +172,102 @@ function Bamboo({ s }) {
 }
 
 function Bonsai({ s }) {
+  const lineW = Math.max(0.7, s * 0.008);
   return (
     <G>
-      <Path d={`M 0 0 C ${s * 0.06} ${-s * 0.12}, ${-s * 0.02} ${-s * 0.2}, ${s * 0.02} ${-s * 0.3}`} stroke={INK} strokeWidth={s * 0.075} fill="none" strokeLinecap="round" />
-      <Path d={`M 0 0 C ${s * 0.06} ${-s * 0.12}, ${-s * 0.02} ${-s * 0.2}, ${s * 0.02} ${-s * 0.3}`} stroke={PAPER} strokeWidth={s * 0.05} fill="none" strokeLinecap="round" />
-      <Ellipse cx={-s * 0.02} cy={-s * 0.4} rx={s * 0.2} ry={s * 0.09} fill={PAPER} stroke={INK} strokeWidth={s * 0.016} />
-      <Ellipse cx={s * 0.15} cy={-s * 0.3} rx={s * 0.13} ry={s * 0.065} fill={PAPER} stroke={INK} strokeWidth={s * 0.016} />
+      <Path d={`M 0 0 C ${s * 0.06} ${-s * 0.12}, ${-s * 0.02} ${-s * 0.2}, ${s * 0.02} ${-s * 0.3}`} stroke={INK} strokeWidth={s * 0.065} fill="none" strokeLinecap="round" />
+      <Path d={`M 0 0 C ${s * 0.06} ${-s * 0.12}, ${-s * 0.02} ${-s * 0.2}, ${s * 0.02} ${-s * 0.3}`} stroke={PAPER} strokeWidth={s * 0.042} fill="none" strokeLinecap="round" />
+      <Ellipse cx={-s * 0.02} cy={-s * 0.4} rx={s * 0.2} ry={s * 0.09} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.2} />
+      <Ellipse cx={s * 0.15} cy={-s * 0.3} rx={s * 0.13} ry={s * 0.065} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.2} />
+      {[-0.11, -0.03, 0.05, 0.13].map((dx, i) => (
+        <Line key={i} x1={-s * 0.02 + dx * s} y1={-s * 0.4} x2={-s * 0.02 + dx * s * 1.3} y2={-s * 0.46} stroke={INK} strokeWidth={lineW * 0.7} strokeLinecap="round" opacity={0.7} />
+      ))}
     </G>
   );
 }
 
 function Cactus({ s }) {
   const bodyW = s * 0.28, bodyH = s * 0.5;
+  const lineW = Math.max(0.7, s * 0.008);
   const ribs = [0.32, 0.5, 0.68].map((at, i) => (
     <Line key={i} x1={-bodyW / 2 + at * bodyW} y1={-bodyH * 0.9} x2={-bodyW / 2 + at * bodyW} y2={-bodyH * 0.1}
-      stroke={INK} strokeWidth={s * 0.01} opacity={i === 1 ? 1 : 0.5} />
+      stroke={INK} strokeWidth={lineW} opacity={i === 1 ? 1 : 0.5} />
   ));
   const spines = [0.24, 0.44, 0.64, 0.82].map((at, i) => (
     <Line key={i} x1={i % 2 ? bodyW * 0.42 : -bodyW * 0.42} y1={-bodyH * at} x2={i % 2 ? bodyW * 0.55 : -bodyW * 0.55} y2={-bodyH * at}
-      stroke={INK} strokeWidth={s * 0.012} strokeLinecap="round" />
+      stroke={INK} strokeWidth={lineW} strokeLinecap="round" />
   ));
   return (
     <G>
       <G transform={`translate(${-s * 0.19} 0) rotate(-24)`}>
-        <Path d={`M 0 0 L 0 ${-s * 0.2}`} stroke={INK} strokeWidth={s * 0.1} strokeLinecap="round" />
-        <Path d={`M 0 0 L 0 ${-s * 0.2}`} stroke={PAPER} strokeWidth={s * 0.07} strokeLinecap="round" />
+        <Path d={`M 0 0 L 0 ${-s * 0.2}`} stroke={INK} strokeWidth={s * 0.085} strokeLinecap="round" />
+        <Path d={`M 0 0 L 0 ${-s * 0.2}`} stroke={PAPER} strokeWidth={s * 0.06} strokeLinecap="round" />
       </G>
       <G transform={`translate(${s * 0.19} 0) rotate(24)`}>
-        <Path d={`M 0 0 L 0 ${-s * 0.17}`} stroke={INK} strokeWidth={s * 0.1} strokeLinecap="round" />
-        <Path d={`M 0 0 L 0 ${-s * 0.17}`} stroke={PAPER} strokeWidth={s * 0.07} strokeLinecap="round" />
+        <Path d={`M 0 0 L 0 ${-s * 0.17}`} stroke={INK} strokeWidth={s * 0.085} strokeLinecap="round" />
+        <Path d={`M 0 0 L 0 ${-s * 0.17}`} stroke={PAPER} strokeWidth={s * 0.06} strokeLinecap="round" />
       </G>
       <G transform={`translate(0 ${-bodyH / 2})`}>
-        <Ellipse cx={0} cy={0} rx={bodyW / 2} ry={bodyH / 2} fill={PAPER} stroke={INK} strokeWidth={s * 0.018} />
+        <Ellipse cx={0} cy={0} rx={bodyW / 2} ry={bodyH / 2} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} />
       </G>
       <G transform={`translate(0 ${-bodyH})`}>{ribs}{spines}</G>
+    </G>
+  );
+}
+
+// Fuenf Topf-Stile statt einer einzigen Universalform, damit eine Sammlung
+// nicht wie ein Topf mit vielen Pflanzen wirkt: band (schlichte Zierlinie),
+// ribbed (gefurchte Keramik), hatch (schraffierter Farbverlauf), basket
+// (geflochten) und legs (kleiner Staender mit Beinchen). bowl ist eine runde
+// Schale statt der spitz zulaufenden Form.
+function Pot({ s, sp, potW, potH }) {
+  const style = sp.pot || 'band';
+  const lineW = Math.max(0.8, s * 0.009);
+  const top = -potH;
+  const isBowl = style === 'bowl';
+
+  const bodyPath = isBowl
+    ? `M ${-potW / 2} ${top * 0.55} Q ${-potW / 2} 0 0 0 Q ${potW / 2} 0 ${potW / 2} ${top * 0.55} Z`
+    : `M ${-potW / 2} ${top} L ${potW / 2} ${top} L ${potW * 0.42} 0 L ${-potW * 0.42} 0 Z`;
+
+  const deco = [];
+  if (style === 'band') {
+    deco.push(<Line key="band" x1={-potW * 0.44} y1={top * 0.6} x2={potW * 0.44} y2={top * 0.6} stroke={INK} strokeWidth={lineW} opacity={0.8} />);
+  }
+  if (style === 'ribbed') {
+    for (let k = -2; k <= 2; k++) {
+      deco.push(<Line key={'r' + k} x1={k * potW * 0.15} y1={top * 0.92} x2={k * potW * 0.11} y2={-2} stroke={INK} strokeWidth={lineW * 0.7} opacity={0.55} />);
+    }
+  }
+  if (style === 'hatch') {
+    for (let row = 0; row < 4; row++) {
+      const y = top * (0.18 + row * 0.2);
+      const count = 3 + row;
+      for (let c = 0; c < count; c++) {
+        const x = -potW * 0.36 + (c * potW * 0.72) / Math.max(1, count - 1);
+        deco.push(<Line key={`h${row}-${c}`} x1={x} y1={y} x2={x} y2={y - s * 0.014} stroke={INK} strokeWidth={lineW * 0.6} opacity={0.5} />);
+      }
+    }
+  }
+  if (style === 'basket') {
+    for (let row = 1; row <= 3; row++) {
+      const y = top * (row / 4);
+      deco.push(<Line key={'bh' + row} x1={-potW * 0.44} y1={y} x2={potW * 0.44} y2={y} stroke={INK} strokeWidth={lineW * 0.65} opacity={0.6} />);
+    }
+    for (let col = -3; col <= 3; col++) {
+      deco.push(<Line key={'bv' + col} x1={col * potW * 0.12} y1={top * 0.92} x2={col * potW * 0.1} y2={-2} stroke={INK} strokeWidth={lineW * 0.5} opacity={0.45} />);
+    }
+  }
+
+  return (
+    <G>
+      {style === 'legs' && [-1, 1].map((dir) => (
+        <Line key={'leg' + dir} x1={dir * potW * 0.3} y1={0} x2={dir * potW * 0.38} y2={potH * 0.16} stroke={INK} strokeWidth={lineW * 0.9} strokeLinecap="round" />
+      ))}
+      <Path d={bodyPath} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.2} strokeLinejoin="round" />
+      {deco}
+      {!isBowl && <Ellipse cx={0} cy={top * 0.92} rx={potW * 0.4} ry={potH * 0.1} fill={PAPER} stroke={INK} strokeWidth={lineW} />}
+      <Ellipse cx={0} cy={top} rx={potW * (isBowl ? 0.5 : 0.55)} ry={potH * 0.13} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.2} />
     </G>
   );
 }
@@ -235,7 +329,7 @@ export function PlantAvatar({ kind = 'generic', mood = 'happy', size = 96, sway 
       <Animated.View style={{ width: s, height: s, transform: [{ rotate }] }}>
         <Svg width={s} height={s} viewBox={`${-s / 2} ${-s} ${s} ${s}`}>
           {/* Boden-Schattenlinie */}
-          <Line x1={-s * 0.25} y1={-s * 0.015} x2={s * 0.25} y2={-s * 0.015} stroke={INK} strokeWidth={Math.max(1.5, s * 0.014)} strokeLinecap="round" opacity={0.5} />
+          <Line x1={-s * 0.25} y1={-s * 0.015} x2={s * 0.25} y2={-s * 0.015} stroke={INK} strokeWidth={Math.max(1, s * 0.009)} strokeLinecap="round" opacity={0.4} />
 
           <G transform={`translate(0 ${-(potH * 0.92)})`}>
             {sp.form === 'fan' && <Fan s={s} sp={sp} />}
@@ -244,17 +338,10 @@ export function PlantAvatar({ kind = 'generic', mood = 'happy', size = 96, sway 
             {sp.form === 'cactus' && <Cactus s={s} />}
           </G>
 
-          {/* Topf */}
-          <G transform="translate(0 0)">
-            <Path
-              d={`M ${-potW / 2} ${-potH} L ${potW / 2} ${-potH} L ${potW * 0.42} 0 L ${-potW * 0.42} 0 Z`}
-              fill={PAPER} stroke={INK} strokeWidth={s * 0.02} strokeLinejoin="round"
-            />
-            <Ellipse cx={0} cy={-potH * 0.92} rx={potW * 0.4} ry={potH * 0.1} fill={PAPER} stroke={INK} strokeWidth={s * 0.018} />
-            <Ellipse cx={0} cy={-potH} rx={potW * 0.55} ry={potH * 0.13} fill={PAPER} stroke={INK} strokeWidth={s * 0.02} />
-          </G>
+          <Pot s={s} sp={sp} potW={potW} potH={potH} />
 
-          {/* Gesicht */}
+          {/* Gesicht - bewusst kraeftiger gezeichnet als die duenne
+              Botanik-Skizze darunter, damit es als niedlicher Kontrast wirkt. */}
           <G transform={`translate(0 ${-potH * 0.34})`}>
             {(FACE[mood] || FACE.happy)(s, eyeD)}
           </G>
