@@ -54,20 +54,23 @@ function jitter(i, amp) {
   return Math.sin(i * 2.61 + 0.7) * amp;
 }
 
-// Echte Einbuchtungen in der Blattkontur (statt nur aufgemalter Linien) -
-// fuer gefiederte/eingeschnittene Blaetter wie Monstera. Baut eine Seite
-// von der Basis zur Spitze mit abwechselnd aussen/innen liegenden Punkten
-// und spiegelt sie fuer die andere Seite.
-function scallopedLeafPath(rx, ry, notches) {
-  const pts = [];
-  for (let k = 0; k < notches; k++) {
-    const t0 = k / notches, t1 = (k + 0.5) / notches;
-    pts.push([rx * (1 - t0 * 0.3), ry - t0 * 1.75 * ry]);
-    pts.push([rx * 0.48 * (1 - t1 * 0.3), ry - t1 * 1.75 * ry]);
-  }
-  const right = pts.map(([x, y]) => `L ${x} ${y}`).join(' ');
-  const left = pts.slice().reverse().map(([x, y]) => `L ${-x} ${y}`).join(' ');
-  return `M 0 ${ry} ${right} L 0 ${-ry} ${left} Z`;
+// Grosslappiges, tief eingeschnittenes Blatt mit weichen Rundungen statt
+// spitzem Zickzack - fuer Fensterblatt-artige Arten wie Monstera. Fest
+// handgezeichnete Kurve (zwei runde Lappen je Seite), keine generische
+// Punktreihe - so bleibt die Silhouette vorhersehbar organisch.
+function scallopedLeafPath(rx, ry) {
+  return [
+    `M 0 ${ry}`,
+    `Q ${rx * 1.05} ${ry * 0.65} ${rx * 0.92} ${ry * 0.05}`,
+    `Q ${rx * 0.55} ${-ry * 0.08} ${rx * 0.7} ${-ry * 0.4}`,
+    `Q ${rx * 1.0} ${-ry * 0.58} ${rx * 0.62} ${-ry * 0.88}`,
+    `Q ${rx * 0.32} ${-ry * 1.05} 0 ${-ry}`,
+    `Q ${-rx * 0.32} ${-ry * 1.05} ${-rx * 0.62} ${-ry * 0.88}`,
+    `Q ${-rx * 1.0} ${-ry * 0.58} ${-rx * 0.7} ${-ry * 0.4}`,
+    `Q ${-rx * 0.55} ${-ry * 0.08} ${-rx * 0.92} ${ry * 0.05}`,
+    `Q ${-rx * 1.05} ${ry * 0.65} 0 ${ry}`,
+    'Z'
+  ].join(' ');
 }
 
 function Leaf({ s, angle, w, h, stemLen, sp, i }) {
@@ -134,7 +137,7 @@ function Leaf({ s, angle, w, h, stemLen, sp, i }) {
     : sp.straight
       ? <Path d={`M ${-rx * 0.62} ${ry} Q ${-rx * (1 - asym)} ${ry * 0.1} 0 ${-ry} Q ${rx * (1 + asym)} ${ry * 0.1} ${rx * 0.62} ${ry} Z`} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round" />
       : sp.slits
-        ? <Path d={scallopedLeafPath(rx, ry, sp.slits)} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round" />
+        ? <Path d={scallopedLeafPath(rx, ry)} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round" />
         : <Path
             d={`M 0 ${ry} C ${-rx * (1.18 + asym)} ${ry * 0.4}, ${-rx * (0.82 + asym * 0.5)} ${-ry * 0.82}, ${tip} ${-ry} C ${rx * (0.82 - asym * 0.5)} ${-ry * 0.82}, ${rx * (1.18 - asym)} ${ry * 0.4}, 0 ${ry} Z`}
             fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round"
@@ -206,38 +209,38 @@ function Bonsai({ s }) {
   );
 }
 
+// Peanut-Kaktus (Echinopsis chamaecereus) waechst als Buendel laenglicher,
+// runder Triebe, nicht als ein Koerper mit duennen Armen - drei
+// ueberlappende, vollflaechig gefuellte Zylinder wirken organischer und
+// koennen sich nicht wie lose Striche vom Koerper abloesen.
 function Cactus({ s }) {
-  const bodyW = s * 0.28, bodyH = s * 0.5;
   const lineW = Math.max(0.7, s * 0.008);
-  const ribs = [0.32, 0.5, 0.68].map((at, i) => (
-    <Line key={i} x1={-bodyW / 2 + at * bodyW} y1={-bodyH * 0.9} x2={-bodyW / 2 + at * bodyW} y2={-bodyH * 0.1}
-      stroke={INK} strokeWidth={lineW} opacity={i === 1 ? 1 : 0.5} />
-  ));
-  const spines = [0.24, 0.44, 0.64, 0.82].map((at, i) => (
-    <Line key={i} x1={i % 2 ? bodyW * 0.42 : -bodyW * 0.42} y1={-bodyH * at} x2={i % 2 ? bodyW * 0.55 : -bodyW * 0.55} y2={-bodyH * at}
-      stroke={INK} strokeWidth={lineW} strokeLinecap="round" />
-  ));
-  // Arme setzen auf halber Koerperhoehe an der Seite an statt auf
-  // Bodenhoehe zu starten - sonst wirken sie vom Koerper abgeloest.
-  const armY = -bodyH * 0.4;
-  const armX = bodyW * 0.32;
+  const blobs = [
+    { x: -s * 0.14, w: s * 0.16, h: s * 0.3, tilt: -9 },
+    { x: s * 0.13, w: s * 0.15, h: s * 0.24, tilt: 11 },
+    { x: 0, w: s * 0.24, h: s * 0.48, tilt: 0 }
+  ];
   return (
     <G>
-      {/* Koerper zuerst zeichnen, Arme danach obendrauf - sonst deckt die
-          deckende Koerperfuellung die Armbasis ab und die Arme wirken
-          abgeloest statt angewachsen. */}
-      <G transform={`translate(0 ${-bodyH / 2})`}>
-        <Ellipse cx={0} cy={0} rx={bodyW / 2} ry={bodyH / 2} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} />
-      </G>
-      <G transform={`translate(${-armX} ${armY}) rotate(-32)`}>
-        <Path d={`M 0 0 L 0 ${-s * 0.17}`} stroke={INK} strokeWidth={s * 0.075} strokeLinecap="round" />
-        <Path d={`M 0 0 L 0 ${-s * 0.17}`} stroke={PAPER} strokeWidth={s * 0.05} strokeLinecap="round" />
-      </G>
-      <G transform={`translate(${armX} ${armY * 0.75}) rotate(30)`}>
-        <Path d={`M 0 0 L 0 ${-s * 0.14}`} stroke={INK} strokeWidth={s * 0.075} strokeLinecap="round" />
-        <Path d={`M 0 0 L 0 ${-s * 0.14}`} stroke={PAPER} strokeWidth={s * 0.05} strokeLinecap="round" />
-      </G>
-      <G transform={`translate(0 ${-bodyH})`}>{ribs}{spines}</G>
+      {blobs.map((b, bi) => {
+        const ribs = [0.3, 0.5, 0.7].map((at, i) => (
+          <Line key={i} x1={-b.w / 2 + at * b.w} y1={-b.h * 0.88} x2={-b.w / 2 + at * b.w} y2={-b.h * 0.12}
+            stroke={INK} strokeWidth={lineW} opacity={i === 1 ? 1 : 0.5} />
+        ));
+        const spines = [0.28, 0.48, 0.68, 0.85].map((at, i) => (
+          <Line key={i} x1={i % 2 ? b.w * 0.4 : -b.w * 0.4} y1={-b.h * at} x2={i % 2 ? b.w * 0.52 : -b.w * 0.52} y2={-b.h * at}
+            stroke={INK} strokeWidth={lineW} strokeLinecap="round" />
+        ));
+        return (
+          <G key={bi} transform={`translate(${b.x} 0) rotate(${b.tilt})`}>
+            <G transform={`translate(0 ${-b.h / 2})`}>
+              <Ellipse cx={0} cy={0} rx={b.w / 2} ry={b.h / 2} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} />
+            </G>
+            {ribs}
+            {spines}
+          </G>
+        );
+      })}
     </G>
   );
 }
