@@ -113,18 +113,26 @@ function Leaf({ s, angle, w, h, stemLen, sp, i }) {
     inner.push(<Circle key="berry" cx={rx * 0.5} cy={ry * 0.6} r={Math.max(1.4, w * 0.06)} fill={PAPER} stroke={INK} strokeWidth={lineW} />);
   }
 
+  // Leichte Asymmetrie statt spiegelgleicher Kurven - echte Blaetter sind
+  // nie perfekt symmetrisch. tip verschiebt die Spitze seitlich, asym
+  // verzieht die beiden Kontrollpunkte gegenlaeufig.
+  const asym = jitter(i, 0.16);
+  const tip = jitter(i + 3, 0.14) * rx;
+
   const shape = sp.round
-    ? <Circle cx={0} cy={0} r={rx} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} />
+    ? <Circle cx={jitter(i, 0.06) * rx} cy={0} r={rx} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} />
     : sp.straight
-      ? <Path d={`M ${-rx * 0.62} ${ry} Q ${-rx} ${ry * 0.1} 0 ${-ry} Q ${rx} ${ry * 0.1} ${rx * 0.62} ${ry} Z`} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round" />
+      ? <Path d={`M ${-rx * 0.62} ${ry} Q ${-rx * (1 - asym)} ${ry * 0.1} ${tip * 0.6} ${-ry} Q ${rx * (1 + asym)} ${ry * 0.1} ${rx * 0.62} ${ry} Z`} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round" />
       : <Path
-          d={`M 0 ${ry} C ${-rx * 1.18} ${ry * 0.4}, ${-rx * 0.82} ${-ry * 0.82}, 0 ${-ry} C ${rx * 0.82} ${-ry * 0.82}, ${rx * 1.18} ${ry * 0.4}, 0 ${ry} Z`}
+          d={`M 0 ${ry} C ${-rx * (1.18 + asym)} ${ry * 0.4}, ${-rx * (0.82 + asym * 0.5)} ${-ry * 0.82}, ${tip} ${-ry} C ${rx * (0.82 - asym * 0.5)} ${-ry * 0.82}, ${rx * (1.18 - asym)} ${ry * 0.4}, 0 ${ry} Z`}
           fill={PAPER} stroke={INK} strokeWidth={lineW * 1.3} strokeLinejoin="round"
         />;
 
+  const stemBend = jitter(i + 7, 0.4) * (stemLen || 1);
+
   return (
     <G transform={`rotate(${angle})`}>
-      {stemLen > 0 && <Line x1={0} y1={0} x2={0} y2={-stemLen} stroke={INK} strokeWidth={lineW * 1.2} strokeLinecap="round" />}
+      {stemLen > 0 && <Path d={`M 0 0 Q ${stemBend} ${-stemLen * 0.5} 0 ${-stemLen}`} stroke={INK} strokeWidth={lineW * 1.2} strokeLinecap="round" fill="none" />}
       <G transform={`translate(0 ${-(stemLen + ry)})`}>{shape}{inner}</G>
     </G>
   );
@@ -226,9 +234,12 @@ function Pot({ s, sp, potW, potH }) {
   const top = -potH;
   const isBowl = style === 'bowl';
 
+  // Leichte Baucharung an den Seiten statt exakt gerader Linien - wirkt
+  // getoepfert statt CAD-gezeichnet.
+  const wob = potW * 0.025;
   const bodyPath = isBowl
     ? `M ${-potW / 2} ${top * 0.55} Q ${-potW / 2} 0 0 0 Q ${potW / 2} 0 ${potW / 2} ${top * 0.55} Z`
-    : `M ${-potW / 2} ${top} L ${potW / 2} ${top} L ${potW * 0.42} 0 L ${-potW * 0.42} 0 Z`;
+    : `M ${-potW / 2} ${top} L ${potW / 2} ${top} Q ${potW / 2 + wob} ${top * 0.4} ${potW * 0.42} 0 L ${-potW * 0.42} 0 Q ${-potW / 2 - wob} ${top * 0.4} ${-potW / 2} ${top} Z`;
 
   const deco = [];
   if (style === 'band') {
@@ -272,32 +283,48 @@ function Pot({ s, sp, potW, potH }) {
   );
 }
 
+const BLUSH = '#E8998A';
+
+function Blush({ eyeD }) {
+  return (
+    <G opacity={0.55}>
+      <Ellipse cx={-eyeD * 2.5} cy={eyeD * 0.9} rx={eyeD * 0.75} ry={eyeD * 0.5} fill={BLUSH} />
+      <Ellipse cx={eyeD * 2.5} cy={eyeD * 0.9} rx={eyeD * 0.75} ry={eyeD * 0.5} fill={BLUSH} />
+    </G>
+  );
+}
+
 const FACE = {
   happy: (s, eyeD) => (
     <G>
-      <Circle cx={-eyeD * 1.5} cy={0} r={eyeD * 0.5} fill={INK} />
-      <Circle cx={eyeD * 1.5} cy={0} r={eyeD * 0.5} fill={INK} />
-      <Path d={`M ${-eyeD * 1.5} ${eyeD * 1.1} Q 0 ${eyeD * 2.4} ${eyeD * 1.5} ${eyeD * 1.1}`} stroke={INK} strokeWidth={s * 0.02} fill="none" strokeLinecap="round" />
+      <Blush eyeD={eyeD} />
+      <Circle cx={-eyeD * 1.5} cy={0} r={eyeD * 0.62} fill={INK} />
+      <Circle cx={eyeD * 1.5} cy={0} r={eyeD * 0.62} fill={INK} />
+      <Circle cx={-eyeD * 1.24} cy={-eyeD * 0.22} r={eyeD * 0.18} fill={PAPER} />
+      <Circle cx={eyeD * 1.76} cy={-eyeD * 0.22} r={eyeD * 0.18} fill={PAPER} />
+      <Path d={`M ${-eyeD * 1.4} ${eyeD * 1.2} Q 0 ${eyeD * 2.7} ${eyeD * 1.4} ${eyeD * 1.2}`} stroke={INK} strokeWidth={s * 0.022} fill="none" strokeLinecap="round" />
     </G>
   ),
   sad: (s, eyeD) => (
     <G>
-      <Path d={`M ${-eyeD * 2.1} ${-eyeD * 0.2} A ${eyeD} ${eyeD} 0 0 0 ${-eyeD * 0.9} ${-eyeD * 0.2}`} stroke={INK} strokeWidth={s * 0.02} fill="none" strokeLinecap="round" />
-      <Path d={`M ${eyeD * 0.9} ${-eyeD * 0.2} A ${eyeD} ${eyeD} 0 0 0 ${eyeD * 2.1} ${-eyeD * 0.2}`} stroke={INK} strokeWidth={s * 0.02} fill="none" strokeLinecap="round" />
-      <Path d={`M ${-eyeD * 1.5} ${eyeD * 1.7} Q 0 ${eyeD * 0.7} ${eyeD * 1.5} ${eyeD * 1.7}`} stroke={INK} strokeWidth={s * 0.02} fill="none" strokeLinecap="round" />
+      <Blush eyeD={eyeD} />
+      <Path d={`M ${-eyeD * 2.15} ${-eyeD * 0.1} A ${eyeD * 1.05} ${eyeD * 1.05} 0 0 0 ${-eyeD * 0.85} ${-eyeD * 0.1}`} stroke={INK} strokeWidth={s * 0.024} fill="none" strokeLinecap="round" />
+      <Path d={`M ${eyeD * 0.85} ${-eyeD * 0.1} A ${eyeD * 1.05} ${eyeD * 1.05} 0 0 0 ${eyeD * 2.15} ${-eyeD * 0.1}`} stroke={INK} strokeWidth={s * 0.024} fill="none" strokeLinecap="round" />
+      <Path d={`M ${-eyeD * 1.4} ${eyeD * 1.75} Q 0 ${eyeD * 0.8} ${eyeD * 1.4} ${eyeD * 1.75}`} stroke={INK} strokeWidth={s * 0.022} fill="none" strokeLinecap="round" />
     </G>
   ),
   sleepy: (s, eyeD) => (
     <G>
-      <Path d={`M ${-eyeD * 2.2} 0 Q ${-eyeD * 1.5} ${-eyeD * 0.9} ${-eyeD * 0.8} 0`} stroke={INK} strokeWidth={s * 0.02} fill="none" strokeLinecap="round" />
-      <Path d={`M ${eyeD * 0.8} 0 Q ${eyeD * 1.5} ${-eyeD * 0.9} ${eyeD * 2.2} 0`} stroke={INK} strokeWidth={s * 0.02} fill="none" strokeLinecap="round" />
-      <Line x1={-eyeD} y1={eyeD * 1.4} x2={eyeD} y2={eyeD * 1.4} stroke={INK} strokeWidth={s * 0.022} strokeLinecap="round" />
+      <Blush eyeD={eyeD} />
+      <Path d={`M ${-eyeD * 2.3} 0 Q ${-eyeD * 1.5} ${-eyeD} ${-eyeD * 0.7} 0`} stroke={INK} strokeWidth={s * 0.022} fill="none" strokeLinecap="round" />
+      <Path d={`M ${eyeD * 0.7} 0 Q ${eyeD * 1.5} ${-eyeD} ${eyeD * 2.3} 0`} stroke={INK} strokeWidth={s * 0.022} fill="none" strokeLinecap="round" />
+      <Path d={`M ${-eyeD * 0.9} ${eyeD * 1.5} Q 0 ${eyeD * 1.9} ${eyeD * 0.9} ${eyeD * 1.5}`} stroke={INK} strokeWidth={s * 0.024} fill="none" strokeLinecap="round" />
     </G>
   ),
   pot: (s, eyeD) => (
-    <G opacity={0.45}>
-      <Circle cx={-eyeD * 1.5} cy={0} r={eyeD * 0.4} fill={INK} />
-      <Circle cx={eyeD * 1.5} cy={0} r={eyeD * 0.4} fill={INK} />
+    <G opacity={0.4}>
+      <Circle cx={-eyeD * 1.5} cy={0} r={eyeD * 0.5} fill={INK} />
+      <Circle cx={eyeD * 1.5} cy={0} r={eyeD * 0.5} fill={INK} />
       <Line x1={-eyeD} y1={eyeD * 1.4} x2={eyeD} y2={eyeD * 1.4} stroke={INK} strokeWidth={s * 0.018} strokeLinecap="round" />
     </G>
   )
@@ -322,7 +349,7 @@ export function PlantAvatar({ kind = 'generic', mood = 'happy', size = 96, sway 
 
   const rotate = swayAnim.interpolate({ inputRange: [0, 1], outputRange: ['-2.6deg', '2.6deg'] });
   const potW = s * 0.56 * (sp.potScale || 1), potH = s * 0.42 * (sp.potScale || 1);
-  const eyeD = Math.max(2.2, s * 0.045);
+  const eyeD = Math.max(2.4, s * 0.05);
 
   return (
     <View style={[{ width: s, height: s, alignItems: 'center', justifyContent: 'center' }, style]}>
