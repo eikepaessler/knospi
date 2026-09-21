@@ -49,13 +49,13 @@ export function TabBar({ state, navigation }) {
 
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: colors.ink },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingTop: 10, paddingBottom: 6 },
-  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: radius.pill },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingTop: 16, paddingBottom: 12 },
+  tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 16, borderRadius: radius.pill },
   tabActive: { backgroundColor: colors.bg },
   dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: 'rgba(246,245,239,0.78)' },
   label: { ...sans(800, 12.5) },
   fab: {
-    width: 52, height: 52, borderRadius: radius.pill, backgroundColor: colors.acc2,
+    width: 58, height: 58, borderRadius: radius.pill, backgroundColor: colors.acc2,
     alignItems: 'center', justifyContent: 'center'
   }
 });

@@ -14,6 +14,15 @@ import { homeHeadline, homeSubline, timeGreeting } from '../lib/greeting';
 const WEEKDAYS = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 const METRIC_ORDER = ['soil', 'light', 'temp', 'humidity'];
 
+// Grober Aufwand statt reiner Anzahl - jede Pflanze ist mit einem Tipp
+// auf "Erledigen" versorgt, also laesst sich die Zeit gut abschaetzen.
+function effortLabel(count) {
+  if (count === 0) return 'Nichts zu tun';
+  if (count === 1) return 'Ca. 1 Minute';
+  if (count <= 3) return `Ca. ${count * 2} Minuten`;
+  return 'Etwas mehr zu tun';
+}
+
 function WeekRow({ week }) {
   const today = new Date().toISOString().slice(0, 10);
   return (
@@ -166,7 +175,7 @@ export function HomeScreen() {
           {attention.length === 0 ? 'Niemand braucht dich gerade' : `${attention.length} von ${plants.length} braucht dich`}
         </Text>
         <Text style={[styles.loadText, { color: colors.acc }]}>
-          {withSensor.length} {withSensor.length === 1 ? 'Pflanze' : 'Pflanzen'}, Sensor gekoppelt
+          {effortLabel(attention.length)}
         </Text>
       </View>
 
