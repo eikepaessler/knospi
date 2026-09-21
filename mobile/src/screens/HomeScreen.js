@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { Screen } from '../components/Screen';
@@ -71,62 +70,49 @@ function metricLine(m) {
   return { text: `${m.label}: ${m.text}`, color: toneColor('warn') };
 }
 
-function PlantPage({ plant, width, onPress }) {
+function PlantTile({ plant, onPress }) {
   const { pct, availableCount, total } = metricSummary(plant);
   const lines = plant.hasSensor
     ? METRIC_ORDER.map((key) => plant.metrics.find((m) => m.key === key)).filter(Boolean).slice(0, 2).map(metricLine)
-    : [{ text: 'Noch kein Sensor gekoppelt', color: colors.mut }];
+    : [{ text: 'Sensor koppeln für Werte', color: colors.mut }];
 
   return (
-    <View style={{ width, paddingHorizontal: 20 }}>
-      <Pressable onPress={onPress} style={[styles.plantCard, shadows.md]}>
-        <View style={styles.plantStage}>
-          <View style={styles.plantBadge}>
-            <Text style={styles.plantBadgeText}>{pct != null ? `${pct}% · ${availableCount} von ${total}` : 'Kein Sensor'}</Text>
-          </View>
-          <PlantAvatar kind={plant.kind} mood={plant.hasSensor ? plant.face : 'happy'} size={100} />
+    <Pressable onPress={onPress} style={[styles.plantCard, shadows.md]}>
+      <View style={[styles.plantStage, { backgroundColor: plant.hasSensor ? colors.acc2 : colors.soft }]}>
+        <View style={[styles.plantBadge, !plant.hasSensor && styles.plantBadgeMuted]}>
+          <Text style={[styles.plantBadgeText, !plant.hasSensor && styles.plantBadgeTextMuted]}>
+            {pct != null ? `${pct}% · ${availableCount} von ${total}` : 'ohne Sensor'}
+          </Text>
         </View>
-        <View style={{ paddingTop: 12 }}>
-          <Text style={styles.plantName}>{plant.name}</Text>
-          <Text style={styles.plantRoom}>{plant.room?.name || 'Kein Raum'}</Text>
-          <View style={styles.plantBarTrack}>
-            <View style={[styles.plantBarFill, { width: `${pct ?? 0}%` }]} />
-          </View>
-          {lines.map((l, i) => (
-            <Text key={i} style={[styles.plantLine, { color: l.color }]}>{l.text}</Text>
-          ))}
+        <PlantAvatar kind={plant.kind} mood={plant.hasSensor ? plant.face : 'happy'} size={84} />
+      </View>
+      <View style={{ paddingTop: 10 }}>
+        <Text style={styles.plantName} numberOfLines={1}>{plant.name}</Text>
+        <Text style={styles.plantRoom} numberOfLines={1}>{plant.room?.name || 'Kein Raum'}</Text>
+        <View style={styles.plantBarTrack}>
+          <View style={[styles.plantBarFill, { width: `${pct ?? 0}%` }]} />
         </View>
-      </Pressable>
-    </View>
+        {lines.map((l, i) => (
+          <Text key={i} style={[styles.plantLine, { color: l.color }]} numberOfLines={1}>{l.text}</Text>
+        ))}
+      </View>
+    </Pressable>
   );
 }
 
-function AllPlantsCarousel({ plants, onPressPlant }) {
-  const { width } = useWindowDimensions();
-  const [index, setIndex] = useState(0);
-
-  function onScrollEnd(e) {
-    const i = Math.round(e.nativeEvent.contentOffset.x / width);
-    setIndex(Math.max(0, Math.min(plants.length - 1, i)));
-  }
-
+function AllPlantsGrid({ plants, onPressPlant }) {
   return (
     <View style={{ marginBottom: 22 }}>
-      <View style={[styles.roomHeader, { paddingHorizontal: 20 }]}>
+      <View style={styles.roomHeader}>
         <Text style={styles.roomTitle}>Alle Pflanzen</Text>
-        <Text style={styles.roomCount}>{index + 1} von {plants.length}</Text>
+        <Text style={styles.roomCount}>{plants.length} {plants.length === 1 ? 'Pflanze' : 'Pflanzen'}</Text>
       </View>
-      <View style={{ marginHorizontal: -20 }}>
-        <ScrollView
-          horizontal pagingEnabled showsHorizontalScrollIndicator={false}
-          onMomentumScrollEnd={onScrollEnd}
-          snapToInterval={width}
-          decelerationRate="fast"
-        >
-          {plants.map((p) => (
-            <PlantPage key={p.id} plant={p} width={width} onPress={() => onPressPlant(p)} />
-          ))}
-        </ScrollView>
+      <View style={styles.plantGrid}>
+        {plants.map((p) => (
+          <View key={p.id} style={styles.plantGridItem}>
+            <PlantTile plant={p} onPress={() => onPressPlant(p)} />
+          </View>
+        ))}
       </View>
     </View>
   );
@@ -186,7 +172,7 @@ export function HomeScreen() {
 
       <HeroCard plant={attention[0] || null} onPress={() => goToPlant(attention[0] || plants[0])} />
 
-      <AllPlantsCarousel plants={plants} onPressPlant={goToPlant} />
+      <AllPlantsGrid plants={plants} onPressPlant={goToPlant} />
 
       {week.length > 0 && <WeekRow week={week} />}
     </Screen>
@@ -215,16 +201,20 @@ const styles = StyleSheet.create({
   wavingCard: {
     borderRadius: radius.xxl, backgroundColor: colors.acc2, padding: 20, alignItems: 'center', gap: 14, marginBottom: 20
   },
-  plantCard: { backgroundColor: colors.card, borderRadius: radius.xl, padding: 14 },
+  plantGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  plantGridItem: { width: '48%', marginBottom: 14 },
+  plantCard: { backgroundColor: colors.card, borderRadius: radius.xl, padding: 10, flex: 1 },
   plantStage: {
-    borderRadius: radius.lg, backgroundColor: colors.acc2, minHeight: 190,
+    borderRadius: radius.lg, minHeight: 140,
     alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 6, overflow: 'hidden'
   },
-  plantBadge: { position: 'absolute', top: 10, left: 10, backgroundColor: colors.ink, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 5 },
-  plantBadgeText: { ...sans(800, 11, { color: colors.bg }) },
-  plantName: { ...baloo(700, 22, { color: colors.ink }) },
-  plantRoom: { ...sans(600, 13, { color: colors.mut, marginBottom: 8 }) },
-  plantBarTrack: { height: 6, borderRadius: 99, backgroundColor: 'rgba(29,36,24,0.09)', overflow: 'hidden', marginBottom: 10 },
+  plantBadge: { position: 'absolute', top: 8, left: 8, right: 8, backgroundColor: colors.ink, borderRadius: radius.pill, paddingHorizontal: 9, paddingVertical: 4, alignSelf: 'flex-start' },
+  plantBadgeMuted: { backgroundColor: 'rgba(29,36,24,0.12)' },
+  plantBadgeText: { ...sans(800, 10, { color: colors.bg }) },
+  plantBadgeTextMuted: { color: colors.mut },
+  plantName: { ...baloo(700, 17, { color: colors.ink }) },
+  plantRoom: { ...sans(600, 12, { color: colors.mut, marginBottom: 7 }) },
+  plantBarTrack: { height: 5, borderRadius: 99, backgroundColor: 'rgba(29,36,24,0.09)', overflow: 'hidden', marginBottom: 8 },
   plantBarFill: { height: '100%', backgroundColor: colors.acc, borderRadius: 99 },
-  plantLine: { ...sans(700, 13.5, { marginBottom: 2 }) }
+  plantLine: { ...sans(700, 11.5, { marginBottom: 2 }) }
 });
