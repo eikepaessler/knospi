@@ -19,9 +19,10 @@ export function TopHeader() {
       </View>
       <View style={styles.actions}>
         <Pressable style={styles.circleBtn} onPress={() => navigation.navigate('Shop')}>
-          <Svg width={20} height={22} viewBox="0 0 20 22">
-            <Path d="M5 0h10l3 6H2z" stroke={colors.ink} strokeWidth={1.6} fill="none" />
-            <Path d="M2 6h16v14H2z" stroke={colors.ink} strokeWidth={1.6} fill="none" />
+          <Svg width={20} height={20} viewBox="0 0 20 20">
+            <Path d="M6.5 2 L4 6 V17 A1.5 1.5 0 0 0 5.5 18.5 H14.5 A1.5 1.5 0 0 0 16 17 V6 L13.5 2 Z" stroke={colors.ink} strokeWidth={1.6} fill="none" strokeLinejoin="round" strokeLinecap="round" />
+            <Path d="M4 6 H16" stroke={colors.ink} strokeWidth={1.6} strokeLinecap="round" />
+            <Path d="M7.5 8.2 A2.3 2.3 0 0 0 12.5 8.2" stroke={colors.ink} strokeWidth={1.6} fill="none" strokeLinecap="round" />
           </Svg>
           {unreadOffer && <View style={styles.badge} />}
         </Pressable>
