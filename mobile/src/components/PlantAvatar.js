@@ -235,11 +235,13 @@ function Pot({ s, sp, potW, potH }) {
   const isBowl = style === 'bowl';
 
   // Leichte Baucharung an den Seiten statt exakt gerader Linien - wirkt
-  // getoepfert statt CAD-gezeichnet.
+  // getoepfert statt CAD-gezeichnet. Die obere Kante ist eine ganz flache
+  // Kurve (keine Ellipse!) - ein Topf von vorn, kein schwebender Kreis oben.
   const wob = potW * 0.025;
+  const rimDip = potH * 0.05;
   const bodyPath = isBowl
     ? `M ${-potW / 2} ${top * 0.55} Q ${-potW / 2} 0 0 0 Q ${potW / 2} 0 ${potW / 2} ${top * 0.55} Z`
-    : `M ${-potW / 2} ${top} L ${potW / 2} ${top} Q ${potW / 2 + wob} ${top * 0.4} ${potW * 0.42} 0 L ${-potW * 0.42} 0 Q ${-potW / 2 - wob} ${top * 0.4} ${-potW / 2} ${top} Z`;
+    : `M ${-potW / 2} ${top} Q 0 ${top - rimDip} ${potW / 2} ${top} Q ${potW / 2 + wob} ${top * 0.4} ${potW * 0.42} 0 L ${-potW * 0.42} 0 Q ${-potW / 2 - wob} ${top * 0.4} ${-potW / 2} ${top} Z`;
 
   const deco = [];
   if (style === 'band') {
@@ -277,8 +279,14 @@ function Pot({ s, sp, potW, potH }) {
       ))}
       <Path d={bodyPath} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.2} strokeLinejoin="round" />
       {deco}
-      {!isBowl && <Ellipse cx={0} cy={top * 0.92} rx={potW * 0.4} ry={potH * 0.1} fill={PAPER} stroke={INK} strokeWidth={lineW} />}
-      <Ellipse cx={0} cy={top} rx={potW * (isBowl ? 0.5 : 0.55)} ry={potH * 0.13} fill={PAPER} stroke={INK} strokeWidth={lineW * 1.2} />
+      {/* Randlippe: eine duenne Innenlinie knapp unter dem oberen Rand statt
+          einer schwebenden Ellipse - liest sich als Topfdicke, nicht als Kreis. */}
+      <Path
+        d={isBowl
+          ? `M ${-potW * 0.42} ${top * 0.5} Q 0 ${top * 0.32} ${potW * 0.42} ${top * 0.5}`
+          : `M ${-potW * 0.46} ${top + rimDip * 0.6} Q 0 ${top - rimDip * 0.5} ${potW * 0.46} ${top + rimDip * 0.6}`}
+        stroke={INK} strokeWidth={lineW * 0.7} fill="none" strokeLinecap="round" opacity={0.6}
+      />
     </G>
   );
 }
