@@ -103,10 +103,17 @@ export function PlantDetailScreen() {
     <Screen>
       <BackHeader
         right={
-          <Pressable onPress={() => navigation.navigate('RoomDetail', { id: plant.room?.id })} style={styles.roomChip}>
-            <View style={[styles.roomDot, { backgroundColor: rc }]} />
-            <Text style={styles.roomChipText}>{plant.room?.name}</Text>
-          </Pressable>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Pressable onPress={() => navigation.navigate('RoomDetail', { id: plant.room?.id })} style={styles.roomChip}>
+              <View style={[styles.roomDot, { backgroundColor: rc }]} />
+              <Text style={styles.roomChipText}>{plant.room?.name}</Text>
+            </Pressable>
+            <Pressable onPress={confirmRemovePlant} style={styles.trashBtn}>
+              <Svg width={16} height={17} viewBox="0 0 16 17">
+                <Path d="M2 4h12M6 4V2h4v2M3 4l1 11.5A1 1 0 0 0 5 16.5h6a1 1 0 0 0 1-1L13 4" stroke={colors.mut} strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+            </Pressable>
+          </View>
         }
       />
 
@@ -293,6 +300,7 @@ export function PlantDetailScreen() {
 
 const styles = StyleSheet.create({
   roomChip: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 44, paddingHorizontal: 16, borderRadius: radius.pill, backgroundColor: colors.card, ...shadows.sm },
+  trashBtn: { width: 44, height: 44, borderRadius: radius.pill, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center', ...shadows.sm },
   roomDot: { width: 10, height: 10, borderRadius: 3 },
   roomChipText: { ...sans(800, 14, { color: colors.ink }) },
   stage: { backgroundColor: colors.acc2, borderRadius: radius.xxxl, padding: 18, alignItems: 'center', marginBottom: 14 },

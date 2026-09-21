@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { Screen } from '../components/Screen';
@@ -13,7 +13,7 @@ import { baloo, sans } from '../theme/typography';
 export function RoomDetailScreen() {
   const navigation = useNavigation();
   const { params } = useRoute();
-  const { rooms, plants, renameRoom } = useAppData();
+  const { rooms, plants, renameRoom, deleteRoom, showToast } = useAppData();
   const room = rooms.find((r) => r.id === params.id);
   const list = plants.filter((p) => p.room?.id === params.id);
   const [editing, setEditing] = useState(false);
@@ -28,9 +28,37 @@ export function RoomDetailScreen() {
     setEditing(false);
   }
 
+  function confirmDeleteRoom() {
+    if (list.length > 0) {
+      return showToast('Erst alle Pflanzen aus dem Raum verschieben oder entfernen.');
+    }
+    Alert.alert(`${room.name} entfernen?`, 'Das kann nicht rückgängig gemacht werden.', [
+      { text: 'Abbrechen', style: 'cancel' },
+      {
+        text: 'Entfernen', style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteRoom(room.id);
+            navigation.goBack();
+          } catch (err) {
+            showToast(err.message);
+          }
+        }
+      }
+    ]);
+  }
+
   return (
     <Screen>
-      <BackHeader />
+      <BackHeader
+        right={
+          <Pressable onPress={confirmDeleteRoom} style={styles.trashBtn}>
+            <Svg width={16} height={17} viewBox="0 0 16 17">
+              <Path d="M2 4h12M6 4V2h4v2M3 4l1 11.5A1 1 0 0 0 5 16.5h6a1 1 0 0 0 1-1L13 4" stroke={colors.mut} strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
+          </Pressable>
+        }
+      />
       <View style={styles.titleRow}>
         {editing ? (
           <TextInput value={draft} onChangeText={setDraft} onSubmitEditing={saveRename} onBlur={saveRename} autoFocus style={styles.titleInput} />
@@ -74,6 +102,7 @@ const styles = StyleSheet.create({
   title: { ...sans(800, 30, { color: colors.ink, letterSpacing: -0.8 }) },
   titleInput: { ...sans(800, 30, { color: colors.ink, letterSpacing: -0.8, borderBottomWidth: 2, borderColor: colors.acc, flex: 1 }) },
   pencil: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  trashBtn: { width: 44, height: 44, borderRadius: radius.pill, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center', ...shadows.sm },
   sub: { ...sans(600, 14, { color: colors.mut, marginBottom: 18 }) },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   tile: { width: '47%', backgroundColor: colors.card, borderRadius: radius.lg, padding: 12, alignItems: 'center' },

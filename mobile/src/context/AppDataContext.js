@@ -124,6 +124,11 @@ export function AppDataProvider({ children }) {
     return room;
   }, []);
 
+  const deleteRoom = useCallback(async (id) => {
+    await api.deleteRoom(id);
+    setRooms((prev) => prev.filter((r) => r.id !== id));
+  }, []);
+
   const addPhoto = useCallback(async (id, uri, note) => {
     const plant = await api.addPhoto(id, uri, note);
     applyPlant(plant);
@@ -160,11 +165,11 @@ export function AppDataProvider({ children }) {
   const value = useMemo(() => ({
     plants, rooms, plantTypes, notifications, settings, stickers, week, loading, toast, reward,
     showToast, refreshAll, fixPlant, waterPlant, assignSensor, pairRealSensor, removeSensor,
-    addPlant, removePlant, updatePlant, addRoom, renameRoom, addPhoto, addDiagnosis, healDiagnosis,
+    addPlant, removePlant, updatePlant, addRoom, renameRoom, deleteRoom, addPhoto, addDiagnosis, healDiagnosis,
     markNotificationRead, markAllRead, updateSettings
   }), [plants, rooms, plantTypes, notifications, settings, stickers, week, loading, toast, reward,
       showToast, refreshAll, fixPlant, waterPlant, assignSensor, pairRealSensor, removeSensor,
-      addPlant, removePlant, updatePlant, addRoom, renameRoom, addPhoto, addDiagnosis, healDiagnosis,
+      addPlant, removePlant, updatePlant, addRoom, renameRoom, deleteRoom, addPhoto, addDiagnosis, healDiagnosis,
       markNotificationRead, markAllRead, updateSettings]);
 
   return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;

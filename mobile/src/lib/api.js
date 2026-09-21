@@ -17,6 +17,7 @@ export const api = {
   getRooms: () => request('/rooms'),
   createRoom: (name) => request('/rooms', { method: 'POST', body: JSON.stringify({ name }) }),
   renameRoom: (id, name) => request(`/rooms/${id}`, { method: 'PATCH', body: JSON.stringify({ name }) }),
+  deleteRoom: (id) => request(`/rooms/${id}`, { method: 'DELETE' }),
 
   getPlantTypes: () => request('/plant-types'),
 
