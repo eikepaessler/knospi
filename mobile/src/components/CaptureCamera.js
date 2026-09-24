@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
 import { colors } from '../theme/colors';
@@ -15,6 +15,15 @@ export function CaptureCamera({ title, subtitle, onCapture, onCancel }) {
   const [permission, requestPermission] = useCameraPermissions();
   const [ready, setReady] = useState(false);
   const cameraRef = useRef(null);
+
+  // Kamera soll sich sofort oeffnen, nicht erst nach einem Tap auf einen
+  // Platzhalter-Button - also die Berechtigung direkt beim Betreten
+  // dieses Screens anfragen, solange sie noch nicht (endgueltig) verweigert ist.
+  useEffect(() => {
+    if (permission && !permission.granted && permission.canAskAgain) {
+      requestPermission();
+    }
+  }, [permission?.granted, permission?.canAskAgain]);
 
   async function shoot() {
     try {
