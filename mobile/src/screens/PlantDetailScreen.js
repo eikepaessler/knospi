@@ -53,13 +53,14 @@ function Collapsible({ title, meta, open, onToggle, children }) {
 export function PlantDetailScreen() {
   const navigation = useNavigation();
   const { params } = useRoute();
-  const { plants, plantTypes, fixPlant, removeSensor, removePlant, updatePlant, healDiagnosis, addPhoto, showToast } = useAppData();
+  const { plants, plantTypes, rooms, fixPlant, removeSensor, removePlant, updatePlant, healDiagnosis, addPhoto, showToast } = useAppData();
   const plant = plants.find((p) => p.id === params.id);
   const [open, setOpen] = useState({ gallery: false, richtwerte: false, info: false });
   const [readings, setReadings] = useState([]);
   const [busy, setBusy] = useState(false);
   const [typePickerOpen, setTypePickerOpen] = useState(false);
   const [typeSearch, setTypeSearch] = useState('');
+  const [roomPickerOpen, setRoomPickerOpen] = useState(false);
 
   useEffect(() => {
     if (plant?.hasSensor) {
@@ -96,6 +97,12 @@ export function PlantDetailScreen() {
   const typeResults = plantTypes.filter((t) =>
     !typeSearch.trim() || t.name.toLowerCase().includes(typeSearch.toLowerCase()) || t.latin.toLowerCase().includes(typeSearch.toLowerCase())
   );
+
+  async function changeRoom(room) {
+    setRoomPickerOpen(false);
+    await withBusy(() => updatePlant(plant.id, { roomId: room.id }));
+    showToast(`${plant.name} ist jetzt in ${room.name}.`);
+  }
 
   function confirmRemovePlant() {
     Alert.alert(`${plant.name} entfernen?`, 'Das kann nicht rückgängig gemacht werden.', [
@@ -150,6 +157,28 @@ export function PlantDetailScreen() {
           <Text style={styles.speciesEdit}>Art ändern</Text>
         </Pressable>
       </View>
+
+      <View style={styles.speciesRow}>
+        <Text style={styles.speciesText}>{plant.room?.name || 'Ohne Raum'}</Text>
+        <Pressable onPress={() => setRoomPickerOpen((v) => !v)}>
+          <Text style={styles.speciesEdit}>Raum ändern</Text>
+        </Pressable>
+      </View>
+
+      {roomPickerOpen && (
+        <Card style={{ marginBottom: 16 }}>
+          <View style={styles.searchHead}>
+            <Text style={styles.searchTitle}>Anderen Raum wählen</Text>
+            <Pressable onPress={() => setRoomPickerOpen(false)}><Text style={styles.searchClose}>Schließen</Text></Pressable>
+          </View>
+          {rooms.map((r) => (
+            <Pressable key={r.id} onPress={() => changeRoom(r)} style={[styles.resultRow, r.id === plant.room?.id && styles.resultRowActive]}>
+              <LeafDot color={roomColor(r.id)} size={16} />
+              <Text style={styles.resultName}>{r.name}</Text>
+            </Pressable>
+          ))}
+        </Card>
+      )}
 
       {typePickerOpen && (
         <Card style={{ marginBottom: 16 }}>

@@ -1,5 +1,3 @@
-export const ROOMS = [
-  { id: 'wohn', name: 'Wohnzimmer' },
-  { id: 'kueche', name: 'Küche' },
-  { id: 'schlaf', name: 'Schlafzimmer' }
-];
+// Keine Standard-Räume mehr - der Nutzer legt seine Räume selbst an
+// (beim Anlegen einer Pflanze oder direkt auf dem Räume-Screen).
+export const ROOMS = [];
