@@ -135,11 +135,6 @@ export function PlantDetailScreen() {
       />
 
       <View style={[styles.stage, shadows.lg]}>
-        {plant.showMood && (
-          <View style={styles.moodBadge}>
-            <Text style={[styles.moodBadgeText, { color: toneColor(plant.tone) }]}>{plant.moodLabel}</Text>
-          </View>
-        )}
         <SpeechBubble>{plant.says}</SpeechBubble>
         <View style={{ marginVertical: 6 }}>
           <PlantAvatar kind={plant.kind} mood={plant.face} size={180} />
@@ -153,32 +148,13 @@ export function PlantDetailScreen() {
 
       <View style={styles.speciesRow}>
         <Text style={styles.speciesText}>{plant.species}</Text>
-        <Pressable onPress={() => setTypePickerOpen((v) => !v)}>
-          <Text style={styles.speciesEdit}>Art ändern</Text>
-        </Pressable>
+        <View style={styles.speciesRightGroup}>
+          {plant.showMood && <Text style={[styles.moodInline, { color: toneColor(plant.tone) }]}>{plant.moodLabel}</Text>}
+          <Pressable onPress={() => setTypePickerOpen((v) => !v)}>
+            <Text style={styles.speciesEdit}>Art ändern</Text>
+          </Pressable>
+        </View>
       </View>
-
-      <View style={styles.speciesRow}>
-        <Text style={styles.speciesText}>{plant.room?.name || 'Ohne Raum'}</Text>
-        <Pressable onPress={() => setRoomPickerOpen((v) => !v)}>
-          <Text style={styles.speciesEdit}>Raum ändern</Text>
-        </Pressable>
-      </View>
-
-      {roomPickerOpen && (
-        <Card style={{ marginBottom: 16 }}>
-          <View style={styles.searchHead}>
-            <Text style={styles.searchTitle}>Anderen Raum wählen</Text>
-            <Pressable onPress={() => setRoomPickerOpen(false)}><Text style={styles.searchClose}>Schließen</Text></Pressable>
-          </View>
-          {rooms.map((r) => (
-            <Pressable key={r.id} onPress={() => changeRoom(r)} style={[styles.resultRow, r.id === plant.room?.id && styles.resultRowActive]}>
-              <LeafDot color={roomColor(r.id)} size={16} />
-              <Text style={styles.resultName}>{r.name}</Text>
-            </Pressable>
-          ))}
-        </Card>
-      )}
 
       {typePickerOpen && (
         <Card style={{ marginBottom: 16 }}>
@@ -356,6 +332,26 @@ export function PlantDetailScreen() {
         </Card>
         <SoftButton label="Sieht komisch aus? Pflanzen-Doktor öffnen" onPress={() => navigation.navigate('DoctorFlow', { plantId: plant.id })} />
       </Collapsible>
+
+      <GhostButton
+        label="In einen anderen Raum umziehen"
+        onPress={() => setRoomPickerOpen((v) => !v)}
+        style={{ marginTop: 4 }}
+      />
+      {roomPickerOpen && (
+        <Card style={{ marginTop: 12 }}>
+          <View style={styles.searchHead}>
+            <Text style={styles.searchTitle}>Anderen Raum wählen</Text>
+            <Pressable onPress={() => setRoomPickerOpen(false)}><Text style={styles.searchClose}>Schließen</Text></Pressable>
+          </View>
+          {rooms.map((r) => (
+            <Pressable key={r.id} onPress={() => changeRoom(r)} style={[styles.resultRow, r.id === plant.room?.id && styles.resultRowActive]}>
+              <LeafDot color={roomColor(r.id)} size={16} />
+              <Text style={styles.resultName}>{r.name}</Text>
+            </Pressable>
+          ))}
+        </Card>
+      )}
     </Screen>
   );
 }
@@ -365,15 +361,15 @@ const styles = StyleSheet.create({
   trashBtn: { width: 44, height: 44, borderRadius: radius.pill, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center', ...shadows.sm },
   roomChipText: { ...sans(800, 14, { color: colors.ink }) },
   stage: { backgroundColor: colors.acc2, borderRadius: radius.xxxl, padding: 18, alignItems: 'center', marginBottom: 14 },
-  moodBadge: { alignSelf: 'flex-start', backgroundColor: colors.ink, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 5, marginBottom: 10 },
-  moodBadgeText: { ...sans(800, 11.5) },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 4 },
   name: { ...baloo(700, 30, { color: colors.ink, letterSpacing: -0.5 }) },
   together: { ...sans(600, 13, { color: colors.mut, marginTop: 2 }) },
   heart: { width: 11, height: 11, borderRadius: 5, transform: [{ rotate: '45deg' }] },
-  speciesRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
+  speciesRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
   speciesText: { ...sans(600, 15, { color: colors.mut, fontStyle: 'italic' }) },
+  speciesRightGroup: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   speciesEdit: { ...sans(700, 12.5, { color: colors.acc, textDecorationLine: 'underline' }) },
+  moodInline: { ...sans(800, 12.5) },
   searchHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   searchTitle: { ...sans(800, 12.5, { color: colors.ok, textTransform: 'uppercase', letterSpacing: 0.5 }) },
   searchClose: { ...sans(800, 12.5, { color: colors.mut }) },
