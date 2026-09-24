@@ -21,7 +21,9 @@ db.exec(schema);
 for (const stmt of [
   'ALTER TABLE sensors ADD COLUMN real_token TEXT',
   'ALTER TABLE sensors ADD COLUMN real_device_id TEXT',
-  'ALTER TABLE sensors ADD COLUMN last_reading_ts TEXT'
+  'ALTER TABLE sensors ADD COLUMN last_reading_ts TEXT',
+  'ALTER TABLE plant_status ADD COLUMN light_pending TEXT',
+  'ALTER TABLE plant_status ADD COLUMN light_pending_since TEXT'
 ]) {
   try { db.exec(stmt); } catch { /* Spalte existiert bereits */ }
 }

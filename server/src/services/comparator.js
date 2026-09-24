@@ -33,6 +33,35 @@ export function computeMetricStatuses(reading, type, at = new Date()) {
   };
 }
 
+// Ein einzelner duesterer/zu greller Messwert kann an Wetter (Wolken) statt
+// am Standort liegen - deshalb wird eine Licht-Verschlechterung erst
+// uebernommen, wenn sie durchgehend mindestens LIGHT_PERSIST_MS anhaelt.
+// Erholung (zurueck zu "ok") greift dagegen sofort, ohne Verzoegerung.
+export const LIGHT_PERSIST_MS = 3 * 60 * 60 * 1000; // 3 Stunden
+
+export function resolveLightStatus({ raw, committed, pendingStatus, pendingSince, now = new Date() }) {
+  if (raw == null || raw === 'ok') {
+    return { status: raw, pendingStatus: null, pendingSince: null };
+  }
+  if (committed == null) {
+    // Allererste Messung dieses Sensors - kein Vorwert zum Halten, sofort uebernehmen.
+    return { status: raw, pendingStatus: null, pendingSince: null };
+  }
+  if (raw === committed) {
+    // Schon als Problem gemeldet - nichts zu verzoegern, kein Pending noetig.
+    return { status: raw, pendingStatus: null, pendingSince: null };
+  }
+  if (pendingStatus === raw && pendingSince) {
+    const elapsed = now.getTime() - new Date(pendingSince).getTime();
+    if (elapsed >= LIGHT_PERSIST_MS) {
+      return { status: raw, pendingStatus: null, pendingSince: null }; // haelt lange genug an -> uebernehmen
+    }
+    return { status: committed ?? null, pendingStatus, pendingSince }; // noch in der Warteschleife
+  }
+  // Neue oder andere Verschlechterung - Warteschleife neu starten.
+  return { status: committed ?? null, pendingStatus: raw, pendingSince: now.toISOString() };
+}
+
 // Prioritaet exakt nach Briefing-Tabelle.
 export function moodFromStatuses({ soil, light, temp, humidity }) {
   if (soil === 'high') return 'soggy';

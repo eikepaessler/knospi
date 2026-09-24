@@ -79,6 +79,11 @@ CREATE INDEX IF NOT EXISTS idx_readings_plant_time ON sensor_readings (plant_id,
 -- Aktueller, abgeleiteter Status je Metrik und Pflanze (ok / low / high),
 -- damit UI und Benachrichtigungsdienst nicht bei jedem Request neu gegen
 -- plant_types rechnen muessen. NULL = "na" (kein Sensor, kein Statuswert).
+-- light_pending/light_pending_since verzoegern eine Licht-Verschlechterung
+-- (ok -> zu duester/zu grell), bis sie eine Weile durchgehend anhaelt - ein
+-- bewoelkter Nachmittag oder eine Wolke vorm Fenster soll nicht sofort als
+-- "falscher Standort" gemeldet werden. Erholung (zurueck zu ok) greift
+-- dagegen sofort, ohne Verzoegerung.
 CREATE TABLE IF NOT EXISTS plant_status (
   plant_id  TEXT PRIMARY KEY REFERENCES plants(id) ON DELETE CASCADE,
   soil      TEXT,
@@ -86,7 +91,9 @@ CREATE TABLE IF NOT EXISTS plant_status (
   temp      TEXT,
   humidity  TEXT,
   mood      TEXT NOT NULL DEFAULT 'happy',
-  updated_at TEXT
+  updated_at TEXT,
+  light_pending       TEXT,
+  light_pending_since TEXT
 );
 
 CREATE TABLE IF NOT EXISTS notifications (

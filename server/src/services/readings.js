@@ -1,6 +1,6 @@
 import { db } from '../db/index.js';
 import {
-  computeMetricStatuses, moodFromStatuses, METRIC_LABEL,
+  computeMetricStatuses, moodFromStatuses, resolveLightStatus, METRIC_LABEL,
   MOOD_SAYS, MOOD_META, FIX_ALL_OK_SAYS, FIX_PARTIAL_SAYS, notificationMessage
 } from './comparator.js';
 import { broadcast } from './events.js';
@@ -48,8 +48,21 @@ export function applyReading(sensorId, reading) {
   const prevStatus = db.prepare('SELECT * FROM plant_status WHERE plant_id = ?').get(plantRow.id) || {};
 
   const statuses = computeMetricStatuses(reading, { range: typeRangeOf(type) });
+  const nowDate = new Date();
+  const now = nowDate.toISOString();
+
+  // Licht-Verschlechterung erst uebernehmen, wenn sie eine Weile anhaelt -
+  // ein einzelner duesterer Messwert kann am Wetter liegen, nicht am Platz.
+  const lightResolved = resolveLightStatus({
+    raw: statuses.light,
+    committed: prevStatus.light ?? null,
+    pendingStatus: prevStatus.light_pending ?? null,
+    pendingSince: prevStatus.light_pending_since ?? null,
+    now: nowDate
+  });
+  statuses.light = lightResolved.status;
+
   const mood = moodFromStatuses(statuses);
-  const now = new Date().toISOString();
 
   const tx = db.transaction(() => {
     db.prepare(`
@@ -62,11 +75,15 @@ export function applyReading(sensorId, reading) {
     `).run(sensorId, plantRow.id, reading.soil_moisture, reading.light_lux, reading.temperature, reading.humidity, now);
 
     db.prepare(`
-      INSERT INTO plant_status (plant_id, soil, light, temp, humidity, mood, updated_at)
-      VALUES (@plant_id, @soil, @light, @temp, @humidity, @mood, @updated_at)
+      INSERT INTO plant_status (plant_id, soil, light, temp, humidity, mood, updated_at, light_pending, light_pending_since)
+      VALUES (@plant_id, @soil, @light, @temp, @humidity, @mood, @updated_at, @light_pending, @light_pending_since)
       ON CONFLICT(plant_id) DO UPDATE SET soil=excluded.soil, light=excluded.light, temp=excluded.temp,
-        humidity=excluded.humidity, mood=excluded.mood, updated_at=excluded.updated_at
-    `).run({ plant_id: plantRow.id, ...statuses, mood, updated_at: now });
+        humidity=excluded.humidity, mood=excluded.mood, updated_at=excluded.updated_at,
+        light_pending=excluded.light_pending, light_pending_since=excluded.light_pending_since
+    `).run({
+      plant_id: plantRow.id, ...statuses, mood, updated_at: now,
+      light_pending: lightResolved.pendingStatus, light_pending_since: lightResolved.pendingSince
+    });
 
     db.prepare("UPDATE sensors SET last_seen = ?, connected = 1 WHERE id = ?").run(now, sensorId);
 
