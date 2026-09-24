@@ -447,9 +447,14 @@ const FACE = {
   sad: (s, eyeD) => (
     <G>
       <Blush eyeD={eyeD} />
-      <Path d={`M ${-eyeD * 2.15} ${-eyeD * 0.1} A ${eyeD * 1.05} ${eyeD * 1.05} 0 0 0 ${-eyeD * 0.85} ${-eyeD * 0.1}`} stroke={INK} strokeWidth={s * 0.024} fill="none" strokeLinecap="round" />
-      <Path d={`M ${eyeD * 0.85} ${-eyeD * 0.1} A ${eyeD * 1.05} ${eyeD * 1.05} 0 0 0 ${eyeD * 2.15} ${-eyeD * 0.1}`} stroke={INK} strokeWidth={s * 0.024} fill="none" strokeLinecap="round" />
-      <Path d={`M ${-eyeD * 0.95} ${eyeD * 1.65} Q 0 ${eyeD * 1} ${eyeD * 0.95} ${eyeD * 1.65}`} stroke={INK} strokeWidth={s * 0.022} fill="none" strokeLinecap="round" />
+      {/* Sorgenvolle Augenbrauen (innen hoch, aussen haengend) ueber
+          geschlossenen, nach unten blickenden Augen - vorher waren die
+          "Augen" fast flache Striche ohne erkennbaren Ausdruck. */}
+      <Path d={`M ${-eyeD * 2.3} ${-eyeD} L ${-eyeD * 0.9} ${-eyeD * 1.5}`} stroke={INK} strokeWidth={s * 0.026} fill="none" strokeLinecap="round" />
+      <Path d={`M ${eyeD * 0.9} ${-eyeD * 1.5} L ${eyeD * 2.3} ${-eyeD}`} stroke={INK} strokeWidth={s * 0.026} fill="none" strokeLinecap="round" />
+      <Path d={`M ${-eyeD * 2.1} 0 Q ${-eyeD * 1.5} ${eyeD * 0.55} ${-eyeD * 0.85} 0`} stroke={INK} strokeWidth={s * 0.024} fill="none" strokeLinecap="round" />
+      <Path d={`M ${eyeD * 0.85} 0 Q ${eyeD * 1.5} ${eyeD * 0.55} ${eyeD * 2.1} 0`} stroke={INK} strokeWidth={s * 0.024} fill="none" strokeLinecap="round" />
+      <Path d={`M ${-eyeD * 0.9} ${eyeD * 1.7} Q 0 ${eyeD} ${eyeD * 0.9} ${eyeD * 1.7}`} stroke={INK} strokeWidth={s * 0.022} fill="none" strokeLinecap="round" />
     </G>
   ),
   sleepy: (s, eyeD) => (
