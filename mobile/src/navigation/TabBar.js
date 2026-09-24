@@ -40,12 +40,12 @@ export function TabBar({ state, navigation }) {
               </Pressable>
             );
           })}
+          <Pressable style={styles.fab} onPress={() => navigation.navigate('AddPlant')}>
+            <Svg width={20} height={20} viewBox="0 0 24 24">
+              <Path d="M12 5v14M5 12h14" stroke={colors.ink} strokeWidth={2.6} strokeLinecap="round" />
+            </Svg>
+          </Pressable>
         </View>
-        <Pressable style={styles.fab} onPress={() => navigation.navigate('AddPlant')}>
-          <Svg width={22} height={22} viewBox="0 0 24 24">
-            <Path d="M12 5v14M5 12h14" stroke={colors.ink} strokeWidth={2.6} strokeLinecap="round" />
-          </Svg>
-        </Pressable>
       </View>
     </View>
   );
@@ -53,14 +53,14 @@ export function TabBar({ state, navigation }) {
 
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 0, right: 0, bottom: 0, overflow: 'hidden' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 14, paddingTop: 14, paddingBottom: 10 },
-  pill: { flex: 1, flexDirection: 'row', backgroundColor: colors.ink, borderRadius: radius.pill, padding: 5, gap: 2 },
+  row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingTop: 14, paddingBottom: 10 },
+  pill: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: colors.ink, borderRadius: radius.pill, padding: 5, gap: 2 },
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 16, borderRadius: radius.pill },
   tabActive: { backgroundColor: colors.bg },
   dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: 'rgba(246,245,239,0.78)' },
   label: { ...sans(800, 12.5) },
   fab: {
-    width: 58, height: 58, borderRadius: radius.pill, backgroundColor: colors.acc2,
-    alignItems: 'center', justifyContent: 'center'
+    width: 52, height: 52, borderRadius: radius.pill, backgroundColor: colors.acc2,
+    alignItems: 'center', justifyContent: 'center', marginLeft: 2
   }
 });
