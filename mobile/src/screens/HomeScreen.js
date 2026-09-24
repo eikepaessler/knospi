@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { Screen } from '../components/Screen';
@@ -7,7 +7,7 @@ import { TopHeader } from '../components/Header';
 import { Card, SpeechBubble, ActionPill } from '../components/ui';
 import { PlantAvatar } from '../components/PlantAvatar';
 import { useAppData } from '../context/AppDataContext';
-import { colors, toneColor } from '../theme/colors';
+import { colors, roomColor, toneColor } from '../theme/colors';
 import { radius, shadows } from '../theme/layout';
 import { baloo, sans } from '../theme/typography';
 import { homeHeadline, homeSubline, timeGreeting } from '../lib/greeting';
@@ -69,19 +69,65 @@ const ALL_GOOD_SAYS = [
   'Wir haben alles, was wir brauchen. Danke dir!'
 ];
 
-function HeroCard({ plant, onPress }) {
+function HeroCard({ onPress }) {
   const [allGoodSays] = useState(() => ALL_GOOD_SAYS[Math.floor(Math.random() * ALL_GOOD_SAYS.length)]);
   return (
     <Pressable onPress={onPress} style={[styles.heroCard, shadows.lg, { backgroundColor: colors.acc2 }]}>
-      <SpeechBubble>{plant ? plant.says : allGoodSays}</SpeechBubble>
-      <PlantAvatar kind={plant?.kind || 'generic'} mood={plant ? plant.face : 'happy'} size={140} />
-      {plant && (
-        <View style={styles.heroTag}>
-          <Text style={styles.heroTagName}>{plant.name}</Text>
-          <Text style={styles.heroTagRoom}>{plant.room?.name}</Text>
-        </View>
-      )}
+      <SpeechBubble>{allGoodSays}</SpeechBubble>
+      <PlantAvatar kind="generic" mood="happy" size={140} />
     </Pressable>
+  );
+}
+
+// Statt nur einer einzelnen Pflanze zeigt der obere Bereich jetzt ALLE
+// Pflanzen, die gerade etwas brauchen, gruppiert nach Raum - jede mit
+// Sprechblase, eigenem Namen und Status (Farbe + Text passend zur Stimmung).
+function NeedyCard({ plant, onPress }) {
+  return (
+    <Pressable onPress={onPress} style={[styles.needyCard, shadows.md]}>
+      <View style={styles.needyStage}>
+        <SpeechBubble style={styles.needyBubble} textStyle={styles.needyBubbleText}>{plant.says}</SpeechBubble>
+        <PlantAvatar kind={plant.kind} mood={plant.face} size={80} />
+      </View>
+      <View style={{ paddingTop: 10 }}>
+        <Text style={styles.plantName} numberOfLines={1}>{plant.name}</Text>
+        <View style={styles.needyStatusRow}>
+          <View style={[styles.needyDot, { backgroundColor: toneColor(plant.tone) }]} />
+          <Text style={[styles.needyStatusText, { color: toneColor(plant.tone) }]} numberOfLines={1}>{plant.moodLabel}</Text>
+        </View>
+      </View>
+    </Pressable>
+  );
+}
+
+function NeedsAttentionRooms({ plants, rooms, onPressPlant }) {
+  const groups = rooms
+    .map((room) => ({ room, list: plants.filter((p) => p.room?.id === room.id) }))
+    .filter((g) => g.list.length > 0);
+  const orphan = plants.filter((p) => !p.room);
+  if (orphan.length) groups.push({ room: null, list: orphan });
+
+  return (
+    <View style={{ marginBottom: 8 }}>
+      {groups.map(({ room, list }) => (
+        <View key={room?.id || 'none'} style={{ marginBottom: 18 }}>
+          <View style={styles.attnRoomHeader}>
+            <View style={[styles.attnRoomDot, { backgroundColor: room ? roomColor(room.id) : colors.mut }]} />
+            <Text style={styles.attnRoomName}>{room?.name || 'Ohne Raum'}</Text>
+            <Text style={styles.attnRoomCount}>{list.length} {list.length === 1 ? 'Pflanze' : 'Pflanzen'}</Text>
+          </View>
+          <View style={{ marginHorizontal: -20 }}>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
+              {list.map((p, i) => (
+                <View key={p.id} style={i === 0 ? undefined : { marginLeft: 12 }}>
+                  <NeedyCard plant={p} onPress={() => onPressPlant(p)} />
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -198,7 +244,11 @@ export function HomeScreen() {
         </Text>
       </View>
 
-      <HeroCard plant={attention[0] || null} onPress={() => goToPlant(attention[0] || plants[0])} />
+      {attention.length === 0 ? (
+        <HeroCard onPress={() => goToPlant(plants[0])} />
+      ) : (
+        <NeedsAttentionRooms plants={attention} rooms={rooms} onPressPlant={goToPlant} />
+      )}
 
       <AllPlantsGrid plants={plants} onPressPlant={goToPlant} />
 
@@ -226,12 +276,23 @@ const styles = StyleSheet.create({
   heroCard: {
     borderRadius: radius.xxl, padding: 20, alignItems: 'center', gap: 14, marginBottom: 22
   },
-  heroTag: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
-  heroTagName: { ...baloo(700, 18, { color: colors.ink }) },
-  heroTagRoom: { ...sans(600, 13, { color: '#3E4A33' }) },
   wavingCard: {
     borderRadius: radius.xxl, backgroundColor: colors.acc2, padding: 20, alignItems: 'center', gap: 14, marginBottom: 20
   },
+  attnRoomHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  attnRoomDot: { width: 9, height: 9, borderRadius: 3 },
+  attnRoomName: { ...sans(800, 16, { color: colors.ink, letterSpacing: -0.3 }) },
+  attnRoomCount: { ...sans(700, 12.5, { color: colors.mut }) },
+  needyCard: { width: 172, backgroundColor: colors.card, borderRadius: radius.xl, padding: 10 },
+  needyStage: {
+    borderRadius: radius.lg, backgroundColor: colors.acc2, minHeight: 140,
+    alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 6, paddingHorizontal: 8, overflow: 'hidden'
+  },
+  needyBubble: { paddingHorizontal: 10, paddingVertical: 8, maxWidth: '100%', marginBottom: 6 },
+  needyBubbleText: { ...sans(700, 11.5, { lineHeight: 15 }) },
+  needyStatusRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
+  needyDot: { width: 7, height: 7, borderRadius: 3.5 },
+  needyStatusText: { ...sans(800, 12.5) },
   plantGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
   plantGridItem: { width: '48%', marginBottom: 14 },
   plantCard: { backgroundColor: colors.card, borderRadius: radius.xl, padding: 10, flex: 1 },
