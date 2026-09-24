@@ -1,5 +1,6 @@
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { BlurView } from 'expo-blur';
 import { colors } from '../theme/colors';
 
 // KeyboardAvoidingView + ScrollView, damit ein fokussiertes Eingabefeld nicht
@@ -21,6 +22,12 @@ export function Screen({ children, scroll = true, contentStyle, style }) {
           {children}
         </Container>
       </KeyboardAvoidingView>
+      {/* Weichzeichner hinter der Statusleiste (Uhrzeit, Akku, ...), damit
+          hochscrollender Inhalt dort nicht hart abgeschnitten wirkt - analog
+          zum Blur in der Fussnavigation (TabBar.js). */}
+      <View style={[styles.topBlurWrap, { height: insets.top + 8 }]} pointerEvents="none">
+        <BlurView intensity={40} tint="light" style={StyleSheet.absoluteFill} />
+      </View>
     </View>
   );
 }
@@ -29,5 +36,6 @@ const styles = StyleSheet.create({
   outer: { flex: 1, backgroundColor: colors.bg },
   inner: { flex: 1 },
   content: { padding: 20, paddingBottom: 140 },
-  contentNoScroll: { flex: 1, padding: 20, paddingBottom: 140 }
+  contentNoScroll: { flex: 1, padding: 20, paddingBottom: 140 },
+  topBlurWrap: { position: 'absolute', top: 0, left: 0, right: 0, overflow: 'hidden' }
 });
