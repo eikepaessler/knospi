@@ -457,7 +457,10 @@ const FACE = {
       <Blush eyeD={eyeD} />
       <Path d={`M ${-eyeD * 2.3} 0 Q ${-eyeD * 1.5} ${-eyeD} ${-eyeD * 0.7} 0`} stroke={INK} strokeWidth={s * 0.022} fill="none" strokeLinecap="round" />
       <Path d={`M ${eyeD * 0.7} 0 Q ${eyeD * 1.5} ${-eyeD} ${eyeD * 2.3} 0`} stroke={INK} strokeWidth={s * 0.022} fill="none" strokeLinecap="round" />
-      <Path d={`M ${-eyeD * 0.6} ${eyeD * 1.55} Q 0 ${eyeD * 1.8} ${eyeD * 0.6} ${eyeD * 1.55}`} stroke={INK} strokeWidth={s * 0.024} fill="none" strokeLinecap="round" />
+      {/* Neutraler, leicht haengender Mund statt eines Laechelns - nur
+          "happy" soll wirklich froehlich wirken, "sleepy" ist unzufrieden
+          (nasse Fuesse/Dunkelheit/trockene Luft), nicht bloss muede. */}
+      <Path d={`M ${-eyeD * 0.7} ${eyeD * 1.55} Q 0 ${eyeD * 1.4} ${eyeD * 0.7} ${eyeD * 1.55}`} stroke={INK} strokeWidth={s * 0.024} fill="none" strokeLinecap="round" />
     </G>
   ),
   pot: (s, eyeD) => (

@@ -72,7 +72,7 @@ export function ShopScreen() {
       <Image
         source={require('../../assets/marketing/geschenk-set-banner.webp')}
         style={styles.banner}
-        resizeMode="contain"
+        resizeMode="cover"
       />
     </Screen>
   );
@@ -91,5 +91,5 @@ const styles = StyleSheet.create({
   rowNote: { ...sans(600, 12, { color: colors.mut, marginTop: 2 }) },
   rowPrice: { ...sans(800, 15, { color: colors.acc }) },
   bundleCard: { flexDirection: 'row', alignItems: 'center', gap: 14, ...shadows.md },
-  banner: { height: 460, aspectRatio: 902 / 1744, alignSelf: 'center', borderRadius: radius.xxl, backgroundColor: 'transparent' }
+  banner: { width: '100%', height: 220, borderRadius: radius.xxl, backgroundColor: colors.soft }
 });
