@@ -206,15 +206,15 @@ export function AddPlantScreen() {
     <Screen contentStyle={{ padding: 20 }}>
       <View style={styles.stepHeadRow}>
         <Text style={styles.stepLabel}>Neue Pflanze · Schritt 3 von 3</Text>
-        <CloseButton onPress={() => navigation.navigate('PlantDetail', { id: createdPlant.id })} />
+        <CloseButton onPress={() => navigation.navigate('Main', { screen: 'Home', params: { screen: 'PlantDetail', params: { id: createdPlant.id } } })} />
       </View>
       <Text style={styles.sensorTitle}>Sensor für {createdPlant?.name}?</Text>
       <Card style={{ gap: 8, marginTop: 16 }}>
         <ActionPill label="Sensor jetzt koppeln" onPress={() => navigation.replace('SensorOnboarding', { plantId: createdPlant.id })} />
-        <GhostButton label="Sensor bestellen · ab 19 €" onPress={() => navigation.navigate('Shop')} />
+        <GhostButton label="Sensor bestellen · ab 19 €" onPress={() => navigation.navigate('Main', { screen: 'Home', params: { screen: 'Shop' } })} />
         <GhostButton
           label="Erstmal ohne Sensor"
-          onPress={() => { showToast(`${createdPlant.name} ist eingezogen. Willkommen!`); navigation.navigate('RoomDetail', { id: createdPlant.room.id }); }}
+          onPress={() => { showToast(`${createdPlant.name} ist eingezogen. Willkommen!`); navigation.navigate('Main', { screen: 'Home', params: { screen: 'RoomDetail', params: { id: createdPlant.room.id } } }); }}
         />
       </Card>
     </Screen>

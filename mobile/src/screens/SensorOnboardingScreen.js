@@ -30,7 +30,7 @@ export function SensorOnboardingScreen() {
     setBusy(true);
     try {
       await assignSensor(plant.id, sensorId);
-      navigation.replace('PlantDetail', { id: plant.id });
+      navigation.navigate('Main', { screen: 'Home', params: { screen: 'PlantDetail', params: { id: plant.id } } });
     } catch (err) {
       showToast(err.message);
       setBusy(false);
@@ -43,7 +43,7 @@ export function SensorOnboardingScreen() {
     setBusy(true);
     try {
       await pairRealSensor(plant.id, realInput.trim());
-      navigation.replace('PlantDetail', { id: plant.id });
+      navigation.navigate('Main', { screen: 'Home', params: { screen: 'PlantDetail', params: { id: plant.id } } });
     } catch (err) {
       showToast(err.message);
     } finally {

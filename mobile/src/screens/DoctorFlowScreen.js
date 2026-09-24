@@ -56,7 +56,7 @@ export function DoctorFlowScreen() {
         tells: result.tells, steps: result.steps, photoUri
       });
       showToast('Behandlung notiert. Ich erinnere dich in 5 Tagen.');
-      navigation.replace('PlantDetail', { id: selectedPlantId });
+      navigation.navigate('Main', { screen: 'Home', params: { screen: 'PlantDetail', params: { id: selectedPlantId } } });
     } catch (err) {
       showToast(err.message);
     } finally {
