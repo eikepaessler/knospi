@@ -460,12 +460,15 @@ const FACE = {
   sleepy: (s, eyeD) => (
     <G>
       <Blush eyeD={eyeD} />
-      <Path d={`M ${-eyeD * 2.3} 0 Q ${-eyeD * 1.5} ${-eyeD} ${-eyeD * 0.7} 0`} stroke={INK} strokeWidth={s * 0.022} fill="none" strokeLinecap="round" />
-      <Path d={`M ${eyeD * 0.7} 0 Q ${eyeD * 1.5} ${-eyeD} ${eyeD * 2.3} 0`} stroke={INK} strokeWidth={s * 0.022} fill="none" strokeLinecap="round" />
-      {/* Neutraler, leicht haengender Mund statt eines Laechelns - nur
-          "happy" soll wirklich froehlich wirken, "sleepy" ist unzufrieden
-          (nasse Fuesse/Dunkelheit/trockene Luft), nicht bloss muede. */}
-      <Path d={`M ${-eyeD * 0.7} ${eyeD * 1.55} Q 0 ${eyeD * 1.4} ${eyeD * 0.7} ${eyeD * 1.55}`} stroke={INK} strokeWidth={s * 0.024} fill="none" strokeLinecap="round" />
+      {/* Gleiche unzufriedene Bauart wie "sad" (Augenbrauen + geschlossene,
+          nach unten blickende Augen), nur mit flacherem Brauen-Winkel und
+          dem neutralen Mund - "sleepy" ist eher unbehaglich (nasse Fuesse/
+          Dunkelheit/trockene Luft) als richtig traurig. */}
+      <Path d={`M ${-eyeD * 2.3} ${-eyeD * 0.35} L ${-eyeD * 0.85} ${-eyeD * 0.65}`} stroke={INK} strokeWidth={s * 0.026} fill="none" strokeLinecap="round" />
+      <Path d={`M ${eyeD * 0.85} ${-eyeD * 0.65} L ${eyeD * 2.3} ${-eyeD * 0.35}`} stroke={INK} strokeWidth={s * 0.026} fill="none" strokeLinecap="round" />
+      <Path d={`M ${-eyeD * 2.1} ${eyeD * 0.35} Q ${-eyeD * 1.5} ${eyeD * 0.85} ${-eyeD * 0.85} ${eyeD * 0.35}`} stroke={INK} strokeWidth={s * 0.024} fill="none" strokeLinecap="round" />
+      <Path d={`M ${eyeD * 0.85} ${eyeD * 0.35} Q ${eyeD * 1.5} ${eyeD * 0.85} ${eyeD * 2.1} ${eyeD * 0.35}`} stroke={INK} strokeWidth={s * 0.024} fill="none" strokeLinecap="round" />
+      <Path d={`M ${-eyeD * 0.7} ${eyeD * 1.6} Q 0 ${eyeD * 1.45} ${eyeD * 0.7} ${eyeD * 1.6}`} stroke={INK} strokeWidth={s * 0.024} fill="none" strokeLinecap="round" />
     </G>
   ),
   pot: (s, eyeD) => (
