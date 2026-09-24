@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
@@ -7,9 +7,7 @@ import { Screen } from '../components/Screen';
 import { BackHeader } from '../components/Header';
 import { Card, ActionPill, GhostButton, SoftButton, SpeechBubble } from '../components/ui';
 import { PlantAvatar } from '../components/PlantAvatar';
-import { Sparkline } from '../components/Sparkline';
 import { useAppData } from '../context/AppDataContext';
-import { api } from '../lib/api';
 import { timeAgo } from '../lib/greeting';
 import { colors, roomColor, toneColor } from '../theme/colors';
 import { radius, shadows } from '../theme/layout';
@@ -39,9 +37,11 @@ function Collapsible({ title, meta, open, onToggle, children }) {
   return (
     <View style={{ marginBottom: 12 }}>
       <Pressable onPress={onToggle} style={styles.collapseHead}>
-        <Text style={styles.collapseTitle}>{title}</Text>
-        {meta && <Text style={styles.collapseMeta}>{meta}</Text>}
-        <Svg width={12} height={8} viewBox="0 0 12 8" style={{ marginLeft: 8, transform: [{ rotate: open ? '180deg' : '0deg' }] }}>
+        <View style={styles.collapseTitleGroup}>
+          <Text style={styles.collapseTitle}>{title}</Text>
+          {meta && <Text style={styles.collapseMeta}>{meta}</Text>}
+        </View>
+        <Svg width={12} height={8} viewBox="0 0 12 8" style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}>
           <Path d="M1 1.5 6 6.5 11 1.5" stroke={colors.mut} strokeWidth={1.7} fill="none" strokeLinecap="round" strokeLinejoin="round" />
         </Svg>
       </Pressable>
@@ -53,20 +53,13 @@ function Collapsible({ title, meta, open, onToggle, children }) {
 export function PlantDetailScreen() {
   const navigation = useNavigation();
   const { params } = useRoute();
-  const { plants, plantTypes, rooms, fixPlant, removeSensor, removePlant, updatePlant, healDiagnosis, addPhoto, showToast } = useAppData();
+  const { plants, plantTypes, rooms, fixPlant, removeSensor, removePlant, updatePlant, healDiagnosis, addPhoto, refreshAll, showToast } = useAppData();
   const plant = plants.find((p) => p.id === params.id);
   const [open, setOpen] = useState({ gallery: false, richtwerte: false, info: false });
-  const [readings, setReadings] = useState([]);
   const [busy, setBusy] = useState(false);
   const [typePickerOpen, setTypePickerOpen] = useState(false);
   const [typeSearch, setTypeSearch] = useState('');
   const [roomPickerOpen, setRoomPickerOpen] = useState(false);
-
-  useEffect(() => {
-    if (plant?.hasSensor) {
-      api.getReadings(plant.id, 30).then(setReadings).catch(() => setReadings([]));
-    }
-  }, [plant?.id, plant?.hasSensor, plant?.readingAt]);
 
   if (!plant) return null;
 
@@ -75,8 +68,8 @@ export function PlantDetailScreen() {
     try { await fn(); } catch (err) { showToast(err.message); } finally { setBusy(false); }
   }
 
-  async function refreshReadings() {
-    try { setReadings(await api.getReadings(plant.id, 30)); } catch { showToast('Sensor meldet sich nicht.'); }
+  async function refreshNow() {
+    try { await refreshAll(); } catch { showToast('Sensor meldet sich nicht.'); }
   }
 
   async function takePhoto() {
@@ -210,10 +203,7 @@ export function PlantDetailScreen() {
         </Card>
       ) : (
         <>
-          <View style={styles.sectionLabelRow}>
-            <View style={[styles.sectionDot, { backgroundColor: toneColor(plant.tone) }]} />
-            <Text style={styles.sectionLabel}>Was der Sensor gerade spürt</Text>
-          </View>
+          <Text style={styles.sectionLabel}>Was der Sensor gerade spürt</Text>
           <Card style={{ marginBottom: 12, paddingVertical: 4 }}>
             {plant.metrics.map((m, i) => (
               <View key={m.key} style={[styles.metricRow, i === plant.metrics.length - 1 && { borderBottomWidth: 0 }]}>
@@ -226,17 +216,14 @@ export function PlantDetailScreen() {
             ))}
           </Card>
 
-          <View style={styles.sectionLabelRow}>
-            <View style={[styles.sectionDot, { backgroundColor: toneColor(plant.tone) }]} />
-            <Text style={styles.sectionLabel}>Letzter Abruf</Text>
-          </View>
+          <Text style={styles.sectionLabel}>Letzter Abruf</Text>
           <Card style={{ marginBottom: 18 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <View>
                 <Text style={styles.liveValue}>{plant.metrics[0]?.value}%</Text>
                 <Text style={styles.liveSub}>Erdfeuchte · {timeAgo(plant.readingAt)}</Text>
               </View>
-              <Pressable onPress={refreshReadings}>
+              <Pressable onPress={refreshNow}>
                 <Text style={styles.refreshText}>Aktualisieren</Text>
               </Pressable>
             </View>
@@ -254,9 +241,6 @@ export function PlantDetailScreen() {
                 <Text style={styles.liveBoxLabel}>Licht</Text>
               </View>
             </View>
-            {readings.length > 1 && (
-              <Sparkline values={readings.map((r) => r.soil_moisture)} width={280} height={46} />
-            )}
           </Card>
 
           <Text style={styles.sectionLabel}>Sensor</Text>
@@ -276,19 +260,21 @@ export function PlantDetailScreen() {
         title="Fotoalbum" meta={`${plant.photos.length} ${plant.photos.length === 1 ? 'Foto' : 'Fotos'}`}
         open={open.gallery} onToggle={() => setOpen((o) => ({ ...o, gallery: !o.gallery }))}
       >
-        <View style={styles.photoGrid}>
-          {plant.photos.map((p) => (
-            <View key={p.id} style={styles.photoTile}>
-              <Image source={{ uri: p.uri }} style={styles.photoImg} />
-              {p.isFirst && <View style={styles.photoBadge}><Text style={styles.photoBadgeText}>EINZUG</Text></View>}
-              <Text style={styles.photoDate}>{new Date(p.takenAt).toLocaleDateString('de-DE')}</Text>
-            </View>
-          ))}
-          <Pressable style={styles.photoAdd} onPress={takePhoto}>
-            <Text style={styles.photoAddPlus}>+</Text>
-            <Text style={styles.photoAddLabel}>Foto{'\n'}machen</Text>
-          </Pressable>
-        </View>
+        <Card>
+          <View style={styles.photoGrid}>
+            {plant.photos.map((p) => (
+              <View key={p.id} style={styles.photoTile}>
+                <Image source={{ uri: p.uri }} style={styles.photoImg} />
+                {p.isFirst && <View style={styles.photoBadge}><Text style={styles.photoBadgeText}>EINZUG</Text></View>}
+                <Text style={styles.photoDate}>{new Date(p.takenAt).toLocaleDateString('de-DE')}</Text>
+              </View>
+            ))}
+            <Pressable style={styles.photoAdd} onPress={takePhoto}>
+              <Text style={styles.photoAddPlus}>+</Text>
+              <Text style={styles.photoAddLabel}>Foto{'\n'}machen</Text>
+            </Pressable>
+          </View>
+        </Card>
       </Collapsible>
 
       <Collapsible
@@ -326,17 +312,20 @@ export function PlantDetailScreen() {
             </View>
           ))}
         </Card>
-        <Card style={{ marginBottom: 10 }}>
+        <Card>
           <Text style={styles.cardTitleBaloo}>Gut zu wissen</Text>
           <Text style={styles.cardBody}>{plant.type.lore}</Text>
         </Card>
-        <SoftButton label="Sieht komisch aus? Pflanzen-Doktor öffnen" onPress={() => navigation.navigate('DoctorFlow', { plantId: plant.id })} />
       </Collapsible>
 
+      <SoftButton
+        label="Sieht komisch aus? Pflanzen-Doktor öffnen"
+        onPress={() => navigation.navigate('DoctorFlow', { plantId: plant.id })}
+        style={{ marginBottom: 10 }}
+      />
       <GhostButton
         label="In einen anderen Raum umziehen"
         onPress={() => setRoomPickerOpen((v) => !v)}
-        style={{ marginTop: 4 }}
       />
       {roomPickerOpen && (
         <Card style={{ marginTop: 12 }}>
@@ -371,7 +360,7 @@ const styles = StyleSheet.create({
   speciesEdit: { ...sans(700, 12.5, { color: colors.acc, textDecorationLine: 'underline' }) },
   moodInline: { ...sans(800, 12.5) },
   searchHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  searchTitle: { ...sans(800, 12.5, { color: colors.ok, textTransform: 'uppercase', letterSpacing: 0.5 }) },
+  searchTitle: { ...sans(800, 13, { color: colors.ok, textTransform: 'uppercase', letterSpacing: 0.5 }) },
   searchClose: { ...sans(800, 12.5, { color: colors.mut }) },
   searchInput: { borderWidth: 1.5, borderColor: colors.line, borderRadius: radius.md, height: 48, paddingHorizontal: 14, ...sans(700, 15, { color: colors.ink }), marginBottom: 10 },
   resultRow: { flexDirection: 'row', alignItems: 'center', gap: 11, padding: 6, borderRadius: radius.md, marginBottom: 4 },
@@ -383,12 +372,10 @@ const styles = StyleSheet.create({
   diagDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.bad },
   diagBadgeText: { ...sans(800, 12, { color: colors.bad }) },
   diagTitle: { ...baloo(600, 19, { color: colors.ink, marginBottom: 4 }) },
-  diagBody: { ...sans(600, 14, { color: colors.mut, marginBottom: 14, lineHeight: 19 }) },
-  sectionLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 10 },
-  sectionDot: { width: 7, height: 7, borderRadius: 3.5 },
+  diagBody: { ...sans(600, 14.5, { color: colors.mut, marginBottom: 14, lineHeight: 19 }) },
   sectionLabel: { ...sans(800, 13, { color: colors.ok, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }) },
   metricRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 13, borderBottomWidth: 1, borderColor: colors.line },
-  metricLabel: { flex: 1, ...sans(600, 16, { color: colors.ink }) },
+  metricLabel: { flex: 1, ...sans(600, 14.5, { color: colors.ink }) },
   metricChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill },
   metricChipText: { ...sans(700, 13) },
   liveValue: { ...baloo(700, 40, { color: colors.ink }) },
@@ -398,11 +385,12 @@ const styles = StyleSheet.create({
   liveBoxValue: { ...sans(800, 15, { color: colors.ink }) },
   liveBoxLabel: { ...sans(600, 11, { color: colors.mut, marginTop: 2 }) },
   refreshText: { ...sans(800, 12.5, { color: colors.acc, textDecorationLine: 'underline' }) },
-  sensorId: { ...sans(700, 14, { color: colors.ink }) },
+  sensorId: { ...sans(700, 14.5, { color: colors.ink }) },
   sensorSub: { ...sans(600, 12, { color: colors.mut, marginTop: 2 }) },
-  linkDanger: { ...sans(800, 13, { color: colors.bad, textDecorationLine: 'underline' }) },
-  collapseHead: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.card, paddingHorizontal: 18 },
-  collapseTitle: { ...sans(800, 15, { color: colors.ink }) },
+  linkDanger: { ...sans(800, 12.5, { color: colors.bad, textDecorationLine: 'underline' }) },
+  collapseHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 52, borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.card, paddingHorizontal: 18 },
+  collapseTitleGroup: { flexDirection: 'row', alignItems: 'center' },
+  collapseTitle: { ...sans(800, 14.5, { color: colors.ink }) },
   collapseMeta: { ...sans(700, 12, { color: colors.mut, marginLeft: 8 }) },
   cardTitleBaloo: { ...baloo(600, 18, { color: colors.ink, marginBottom: 6 }) },
   cardBody: { ...sans(600, 14.5, { color: colors.mut, lineHeight: 20 }) },
@@ -416,7 +404,7 @@ const styles = StyleSheet.create({
   photoAddPlus: { ...sans(700, 18, { color: colors.acc }) },
   photoAddLabel: { ...sans(800, 10.5, { color: colors.acc, textAlign: 'center', lineHeight: 13 }) },
   richRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, borderBottomWidth: 1, borderColor: colors.line },
-  richLabel: { ...sans(700, 14, { color: colors.ink }) },
+  richLabel: { ...sans(700, 14.5, { color: colors.ink }) },
   richHint: { ...sans(600, 12, { color: colors.mut, marginTop: 2 }) },
   richValue: { ...sans(700, 13) },
   factRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderColor: colors.line },
