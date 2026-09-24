@@ -10,10 +10,24 @@ export function statusFor(value, [min, max]) {
   return 'ok';
 }
 
-export function computeMetricStatuses(reading, type) {
+// Natuerliches Licht ist morgens/abends von Haus aus schwaecher - ohne das
+// zu beruecksichtigen wuerde eine Pflanze schon um 6 Uhr "zu dunkel" melden,
+// obwohl das ganz normal ist. Der Mindestwert wird daher in der Daemmerung
+// abgesenkt und nachts (kein Tageslicht zu erwarten) gar nicht erst gegen
+// "zu dunkel" geprueft.
+export function lightMinFactor(date = new Date()) {
+  const h = date.getHours() + date.getMinutes() / 60;
+  if (h >= 9 && h < 18) return 1; // voller Taganspruch
+  if (h >= 6 && h < 9) return 0.4 + (0.6 * (h - 6)) / 3; // Morgendaemmerung: 0.4 -> 1
+  if (h >= 18 && h < 21) return 1 - (0.6 * (h - 18)) / 3; // Abenddaemmerung: 1 -> 0.4
+  return 0; // Nacht: "zu dunkel" wird nicht gemeldet
+}
+
+export function computeMetricStatuses(reading, type, at = new Date()) {
+  const [lightMin, lightMax] = type.range.light;
   return {
     soil: statusFor(reading.soil_moisture, type.range.soil),
-    light: statusFor(reading.light_lux, type.range.light),
+    light: statusFor(reading.light_lux, [lightMin * lightMinFactor(at), lightMax]),
     temp: statusFor(reading.temperature, type.range.temp),
     humidity: statusFor(reading.humidity, type.range.humidity)
   };

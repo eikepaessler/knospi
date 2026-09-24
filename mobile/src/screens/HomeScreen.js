@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
@@ -56,12 +57,30 @@ function WeekRow({ week }) {
   );
 }
 
+// Wenn niemand etwas braucht, soll die Karte sich nicht jedes Mal gleich
+// anfuehlen - eine zufaellig gewaehlte, aber pro Aufruf stabile Begruessung
+// aus einem kleinen Pool statt einem einzigen festen Satz.
+const ALL_GOOD_SAYS = [
+  'Hallo! Uns geht es hier allen richtig gut.',
+  'Alles bestens - genieß den Moment mit uns.',
+  'Wir sind rundum zufrieden. Danke dir!',
+  'Kein Grund zur Sorge, alle glücklich hier.',
+  'Alles im grünen Bereich, im wahrsten Sinne.',
+  'Wir haben alles, was wir brauchen. Danke dir!'
+];
+
 function HeroCard({ plant, onPress }) {
-  const needsHelp = plant && plant.mood !== 'happy';
+  const [allGoodSays] = useState(() => ALL_GOOD_SAYS[Math.floor(Math.random() * ALL_GOOD_SAYS.length)]);
   return (
-    <Pressable onPress={onPress} style={[styles.heroCard, shadows.lg, { backgroundColor: needsHelp ? colors.soft2 : colors.acc2 }]}>
-      <SpeechBubble>{plant ? plant.says : 'Nichts zu tun. Wir winken dir nur mal zu.'}</SpeechBubble>
+    <Pressable onPress={onPress} style={[styles.heroCard, shadows.lg, { backgroundColor: colors.acc2 }]}>
+      <SpeechBubble>{plant ? plant.says : allGoodSays}</SpeechBubble>
       <PlantAvatar kind={plant?.kind || 'generic'} mood={plant ? plant.face : 'happy'} size={140} />
+      {plant && (
+        <View style={styles.heroTag}>
+          <Text style={styles.heroTagName}>{plant.name}</Text>
+          <Text style={styles.heroTagRoom}>{plant.room?.name}</Text>
+        </View>
+      )}
     </Pressable>
   );
 }
@@ -207,6 +226,9 @@ const styles = StyleSheet.create({
   heroCard: {
     borderRadius: radius.xxl, padding: 20, alignItems: 'center', gap: 14, marginBottom: 22
   },
+  heroTag: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
+  heroTagName: { ...baloo(700, 18, { color: colors.ink }) },
+  heroTagRoom: { ...sans(600, 13, { color: '#3E4A33' }) },
   wavingCard: {
     borderRadius: radius.xxl, backgroundColor: colors.acc2, padding: 20, alignItems: 'center', gap: 14, marginBottom: 20
   },
