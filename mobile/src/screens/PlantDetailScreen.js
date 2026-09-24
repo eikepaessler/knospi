@@ -273,10 +273,13 @@ export function PlantDetailScreen() {
                 <Text style={styles.photoDate}>{new Date(p.takenAt).toLocaleDateString('de-DE')}</Text>
               </View>
             ))}
-            <Pressable style={styles.photoAdd} onPress={takePhoto}>
-              <Text style={styles.photoAddPlus}>+</Text>
-              <Text style={styles.photoAddLabel}>Foto{'\n'}machen</Text>
-            </Pressable>
+            <View style={styles.photoTile}>
+              <Pressable style={styles.photoAdd} onPress={takePhoto}>
+                <Text style={styles.photoAddPlus}>+</Text>
+                <Text style={styles.photoAddLabel}>Foto{'\n'}machen</Text>
+              </Pressable>
+              <Text style={[styles.photoDate, { opacity: 0 }]}> </Text>
+            </View>
           </View>
         </Card>
       </Collapsible>
@@ -404,7 +407,7 @@ const styles = StyleSheet.create({
   photoBadge: { position: 'absolute', top: 6, left: 6, backgroundColor: colors.btn, borderRadius: radius.pill, paddingHorizontal: 7, paddingVertical: 2 },
   photoBadgeText: { ...sans(800, 8.5, { color: colors.acc2 }) },
   photoDate: { ...sans(800, 10, { color: colors.mut, textAlign: 'center' }) },
-  photoAdd: { width: '31%', aspectRatio: 3 / 4, borderRadius: radius.md, borderWidth: 1.5, borderColor: 'rgba(29,36,24,0.28)', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  photoAdd: { width: '100%', aspectRatio: 3 / 4, borderRadius: radius.md, borderWidth: 1.5, borderColor: 'rgba(29,36,24,0.28)', borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 6 },
   photoAddPlus: { ...sans(700, 18, { color: colors.acc }) },
   photoAddLabel: { ...sans(800, 10.5, { color: colors.acc, textAlign: 'center', lineHeight: 13 }) },
   richRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, borderBottomWidth: 1, borderColor: colors.line },

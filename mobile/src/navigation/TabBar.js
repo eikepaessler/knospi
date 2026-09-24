@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
   tab: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 16, borderRadius: radius.pill },
   tabActive: { backgroundColor: colors.bg },
   dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: 'rgba(246,245,239,0.78)' },
-  label: { ...sans(800, 12.5) },
+  label: { ...sans(800, 14) },
   fab: {
     width: 52, height: 52, borderRadius: radius.pill, backgroundColor: colors.acc2,
     alignItems: 'center', justifyContent: 'center', marginLeft: 2

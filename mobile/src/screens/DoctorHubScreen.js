@@ -1,6 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Svg, { Path } from 'react-native-svg';
 import { Screen } from '../components/Screen';
 import { TopHeader } from '../components/Header';
 import { ActionPill, Card } from '../components/ui';
@@ -22,9 +21,6 @@ export function DoctorHubScreen() {
       <Text style={styles.sub}>Braune Ränder, weiße Flecken, klebrige Blätter? Ich schau's mir an.</Text>
 
       <View style={styles.heroCard}>
-        <Svg width={54} height={54} viewBox="0 0 24 24">
-          <Path d="M12 3v6M9 6h6M6 12c0 5 3.5 8 6 9 2.5-1 6-4 6-9a4 4 0 00-6-3.4A4 4 0 006 12z" stroke={colors.acc} strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        </Svg>
         <Text style={styles.heroText}>Abgleich mit 2.800 Krankheits- und Schädlingsbildern.</Text>
         <ActionPill label="Diagnose starten" onPress={() => navigation.navigate('DoctorFlow')} style={{ width: '100%' }} />
       </View>
