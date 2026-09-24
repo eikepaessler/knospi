@@ -15,6 +15,10 @@ export function AppDataProvider({ children }) {
   const [stickers, setStickers] = useState([]);
   const [week, setWeek] = useState([]);
   const [loading, setLoading] = useState(true);
+  // Unterscheidet "wirklich noch keine Pflanze angelegt" von "Server gerade
+  // nicht erreichbar" - beides sah bisher identisch aus (leere Liste), was
+  // beim Nutzer den Eindruck erweckte, seine Pflanzen seien verschwunden.
+  const [serverError, setServerError] = useState(false);
   const [toast, setToast] = useState('');
   const [reward, setReward] = useState(null); // Sticker-Freischalt-Overlay
   const toastTimer = useRef(null);
@@ -37,8 +41,10 @@ export function AppDataProvider({ children }) {
         api.getPlants(), api.getRooms(), api.getPlantTypes(), api.getNotifications(), api.getSettings(), api.getStickers(), api.getWeek()
       ]);
       setPlants(p); setRooms(r); setPlantTypes(t); setNotifications(n); setSettings(s); setStickers(st); setWeek(w);
+      setServerError(false);
     } catch (err) {
       console.warn('Aktualisierung fehlgeschlagen:', err.message);
+      setServerError(true);
     } finally {
       setLoading(false);
     }
@@ -163,11 +169,11 @@ export function AppDataProvider({ children }) {
   }, []);
 
   const value = useMemo(() => ({
-    plants, rooms, plantTypes, notifications, settings, stickers, week, loading, toast, reward,
+    plants, rooms, plantTypes, notifications, settings, stickers, week, loading, serverError, toast, reward,
     showToast, refreshAll, fixPlant, waterPlant, assignSensor, pairRealSensor, removeSensor,
     addPlant, removePlant, updatePlant, addRoom, renameRoom, deleteRoom, addPhoto, addDiagnosis, healDiagnosis,
     markNotificationRead, markAllRead, updateSettings
-  }), [plants, rooms, plantTypes, notifications, settings, stickers, week, loading, toast, reward,
+  }), [plants, rooms, plantTypes, notifications, settings, stickers, week, loading, serverError, toast, reward,
       showToast, refreshAll, fixPlant, waterPlant, assignSensor, pairRealSensor, removeSensor,
       addPlant, removePlant, updatePlant, addRoom, renameRoom, deleteRoom, addPhoto, addDiagnosis, healDiagnosis,
       markNotificationRead, markAllRead, updateSettings]);

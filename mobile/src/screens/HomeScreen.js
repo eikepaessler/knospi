@@ -194,7 +194,7 @@ function AllPlantsGrid({ plants, onPressPlant }) {
 
 export function HomeScreen() {
   const navigation = useNavigation();
-  const { plants, rooms, week } = useAppData();
+  const { plants, rooms, week, serverError, loading, refreshAll } = useAppData();
 
   const withSensor = plants.filter((p) => p.hasSensor);
   const attention = withSensor.filter((p) => p.mood !== 'happy');
@@ -206,6 +206,28 @@ export function HomeScreen() {
   }));
 
   const goToPlant = (p) => navigation.navigate('PlantDetail', { id: p.id });
+
+  // Ein fehlgeschlagener Ladeversuch sah bisher genauso aus wie "wirklich
+  // keine Pflanze angelegt" - das hat den Eindruck erweckt, Daten wären weg.
+  // Jetzt gibt es dafür einen eigenen Hinweis statt der Willkommens-Karte.
+  if (plants.length === 0 && serverError) {
+    return (
+      <Screen>
+        <TopHeader />
+        <Text style={styles.greetLine1}>{timeGreeting()}</Text>
+        <Text style={styles.greetLine2}>Keine Verbindung.</Text>
+        <Text style={styles.subline}>
+          Deine Pflanzen sind sicher gespeichert - die App kann den Server auf deinem Mac gerade nur nicht erreichen.
+          Prüf, ob "npm run dev" noch läuft und ob Handy und Mac im selben WLAN sind.
+        </Text>
+        <View style={[styles.wavingCard, shadows.lg]}>
+          <SpeechBubble>Hmm, ich komm gerade nicht zu meinen Daten durch.</SpeechBubble>
+          <PlantAvatar kind="generic" mood="sad" size={140} />
+        </View>
+        <ActionPill label={loading ? 'Verbinde…' : 'Erneut versuchen'} onPress={refreshAll} />
+      </Screen>
+    );
+  }
 
   if (plants.length === 0) {
     return (
