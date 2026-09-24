@@ -322,9 +322,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg, minHeight: 140,
     alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 6, overflow: 'hidden'
   },
-  plantBadge: { position: 'absolute', top: 8, left: 8, right: 8, backgroundColor: colors.ink, borderRadius: radius.pill, paddingHorizontal: 9, paddingVertical: 4, alignSelf: 'flex-start' },
+  plantBadge: { position: 'absolute', top: 8, left: 8, backgroundColor: colors.ink, borderRadius: radius.pill, paddingHorizontal: 9, paddingVertical: 4 },
   plantBadgeMuted: { backgroundColor: 'rgba(29,36,24,0.12)' },
-  plantBadgeText: { ...sans(800, 10, { color: colors.bg }) },
+  plantBadgeText: { ...sans(800, 10, { color: colors.acc2 }) },
   plantBadgeTextMuted: { color: colors.mut },
   plantName: { ...baloo(700, 17, { color: colors.ink }) },
   plantRoom: { ...sans(600, 12, { color: colors.mut, marginBottom: 7 }) },

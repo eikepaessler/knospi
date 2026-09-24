@@ -1,10 +1,21 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Rect } from 'react-native-svg';
 import { colors } from '../theme/colors';
 import { radius, shadows } from '../theme/layout';
 import { sans } from '../theme/typography';
 import { useAppData } from '../context/AppDataContext';
+
+// Gleiches Blatt-Icon wie der aktive Tab in der Fussnavigation (TabBar.js) -
+// fuer ein durchgaengiges Markenzeichen statt eines schmucklosen Kastens.
+function LeafMark() {
+  return (
+    <Svg width={18} height={18} viewBox="0 0 24 24">
+      <Path d="M20 4C10 4 4 10 4 20c10 0 16-6 16-16z" fill={colors.ok} />
+      <Path d="M6 18c4-4 8-8 12-12" stroke={colors.card} strokeWidth={1.4} strokeLinecap="round" opacity={0.35} />
+    </Svg>
+  );
+}
 
 export function TopHeader() {
   const navigation = useNavigation();
@@ -14,15 +25,14 @@ export function TopHeader() {
   return (
     <View style={styles.row}>
       <View style={styles.brand}>
-        <View style={styles.brandDot} />
+        <LeafMark />
         <Text style={styles.brandText}>Knospi</Text>
       </View>
       <View style={styles.actions}>
         <Pressable style={styles.circleBtn} onPress={() => navigation.navigate('Shop')}>
           <Svg width={20} height={20} viewBox="0 0 20 20">
-            <Path d="M6.5 2 L4 6 V17 A1.5 1.5 0 0 0 5.5 18.5 H14.5 A1.5 1.5 0 0 0 16 17 V6 L13.5 2 Z" stroke={colors.ink} strokeWidth={1.6} fill="none" strokeLinejoin="round" strokeLinecap="round" />
-            <Path d="M4 6 H16" stroke={colors.ink} strokeWidth={1.6} strokeLinecap="round" />
-            <Path d="M7.5 8.2 A2.3 2.3 0 0 0 12.5 8.2" stroke={colors.ink} strokeWidth={1.6} fill="none" strokeLinecap="round" />
+            <Rect x={4} y={6.5} width={12} height={10.5} rx={2.6} stroke={colors.ink} strokeWidth={1.6} fill="none" strokeLinejoin="round" />
+            <Path d="M7.2 6.5 V4.6 A2.8 2.8 0 0 1 12.8 4.6 V6.5" stroke={colors.ink} strokeWidth={1.6} fill="none" strokeLinecap="round" strokeLinejoin="round" />
           </Svg>
           {unreadOffer && <View style={styles.badge} />}
         </Pressable>
@@ -63,7 +73,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 },
   backRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
   brand: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  brandDot: { width: 16, height: 16, borderRadius: 3, backgroundColor: colors.ok },
   brandText: { ...sans(800, 16, { color: colors.ok, letterSpacing: -0.3 }) },
   actions: { flexDirection: 'row', alignItems: 'center', gap: 9 },
   circleBtn: {
