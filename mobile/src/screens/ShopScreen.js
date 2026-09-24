@@ -88,5 +88,5 @@ const styles = StyleSheet.create({
   rowNote: { ...sans(600, 12, { color: colors.mut, marginTop: 2 }) },
   rowPrice: { ...sans(800, 15, { color: colors.acc }) },
   bundleCard: { flexDirection: 'row', alignItems: 'center', gap: 14, ...shadows.md },
-  banner: { width: '100%', aspectRatio: 902 / 1744, borderRadius: radius.xxl, backgroundColor: 'transparent' }
+  banner: { height: 320, aspectRatio: 902 / 1744, alignSelf: 'center', borderRadius: radius.xxl, backgroundColor: 'transparent' }
 });
