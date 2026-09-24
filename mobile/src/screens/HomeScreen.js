@@ -87,7 +87,7 @@ function NeedyCard({ plant, onPress }) {
     <Pressable onPress={onPress} style={[styles.needyCard, shadows.md]}>
       <View style={styles.needyStage}>
         <SpeechBubble style={styles.needyBubble} textStyle={styles.needyBubbleText}>{plant.says}</SpeechBubble>
-        <PlantAvatar kind={plant.kind} mood={plant.face} size={94} />
+        <PlantAvatar kind={plant.kind} mood={plant.face} size={108} />
       </View>
       <View style={{ paddingTop: 10 }}>
         <Text style={styles.plantName} numberOfLines={1}>{plant.name}</Text>
@@ -305,10 +305,10 @@ const styles = StyleSheet.create({
   attnRoomDot: { width: 9, height: 9, borderRadius: 3 },
   attnRoomName: { ...sans(800, 16, { color: colors.ink, letterSpacing: -0.3 }) },
   attnRoomCount: { ...sans(700, 12.5, { color: colors.mut }) },
-  needyCard: { width: 172, backgroundColor: colors.card, borderRadius: radius.xl, padding: 10 },
+  needyCard: { width: 200, backgroundColor: colors.card, borderRadius: radius.xl, padding: 10 },
   needyStage: {
-    borderRadius: radius.lg, backgroundColor: colors.acc2, minHeight: 140,
-    alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 6, paddingHorizontal: 8, overflow: 'hidden'
+    borderRadius: radius.lg, backgroundColor: colors.acc2, minHeight: 168,
+    alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 8, paddingHorizontal: 14, paddingTop: 14, overflow: 'hidden'
   },
   needyBubble: { paddingHorizontal: 10, paddingVertical: 8, maxWidth: '100%', marginBottom: 6 },
   needyBubbleText: { ...sans(700, 11.5, { lineHeight: 15 }) },
