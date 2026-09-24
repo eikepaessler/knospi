@@ -140,13 +140,17 @@ export function PlantDetailScreen() {
       </View>
 
       <View style={styles.speciesRow}>
-        <Text style={styles.speciesText}>{plant.species}</Text>
-        <View style={styles.speciesRightGroup}>
-          {plant.showMood && <Text style={[styles.moodInline, { color: toneColor(plant.tone) }]}>{plant.moodLabel}</Text>}
+        <View style={styles.speciesLeftGroup}>
+          <Text style={styles.speciesText}>{plant.species}</Text>
           <Pressable onPress={() => setTypePickerOpen((v) => !v)}>
             <Text style={styles.speciesEdit}>Art ändern</Text>
           </Pressable>
         </View>
+        {plant.showMood && (
+          <View style={[styles.moodBadge, { backgroundColor: `${toneColor(plant.tone)}26` }]}>
+            <Text style={[styles.moodBadgeText, { color: toneColor(plant.tone) }]}>{plant.moodLabel}</Text>
+          </View>
+        )}
       </View>
 
       {typePickerOpen && (
@@ -323,10 +327,9 @@ export function PlantDetailScreen() {
         onPress={() => navigation.navigate('DoctorFlow', { plantId: plant.id })}
         style={{ marginBottom: 10 }}
       />
-      <GhostButton
-        label="In einen anderen Raum umziehen"
-        onPress={() => setRoomPickerOpen((v) => !v)}
-      />
+      <Pressable style={styles.moveRoomBtn} onPress={() => setRoomPickerOpen((v) => !v)}>
+        <Text style={styles.moveRoomLabel}>In einen anderen Raum umziehen</Text>
+      </Pressable>
       {roomPickerOpen && (
         <Card style={{ marginTop: 12 }}>
           <View style={styles.searchHead}>
@@ -355,10 +358,11 @@ const styles = StyleSheet.create({
   together: { ...sans(600, 13, { color: colors.mut, marginTop: 2 }) },
   heart: { width: 11, height: 11, borderRadius: 5, transform: [{ rotate: '45deg' }] },
   speciesRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 16 },
+  speciesLeftGroup: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   speciesText: { ...sans(600, 15, { color: colors.mut, fontStyle: 'italic' }) },
-  speciesRightGroup: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   speciesEdit: { ...sans(700, 12.5, { color: colors.acc, textDecorationLine: 'underline' }) },
-  moodInline: { ...sans(800, 12.5) },
+  moodBadge: { paddingHorizontal: 11, paddingVertical: 5, borderRadius: radius.pill },
+  moodBadgeText: { ...sans(800, 12.5) },
   searchHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   searchTitle: { ...sans(800, 13, { color: colors.ok, textTransform: 'uppercase', letterSpacing: 0.5 }) },
   searchClose: { ...sans(800, 12.5, { color: colors.mut }) },
@@ -409,5 +413,10 @@ const styles = StyleSheet.create({
   richValue: { ...sans(700, 13) },
   factRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12, borderBottomWidth: 1, borderColor: colors.line },
   factLabel: { ...sans(700, 13, { color: colors.mut }) },
-  factValue: { ...sans(700, 13, { color: colors.ink }) }
+  factValue: { ...sans(700, 13, { color: colors.ink }) },
+  moveRoomBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.line, borderRadius: radius.xl, paddingVertical: 16
+  },
+  moveRoomLabel: { ...sans(700, 14, { color: colors.acc }) }
 });
