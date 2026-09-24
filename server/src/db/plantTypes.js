@@ -2,6 +2,9 @@
 // Pflegetipp (tip), Artenfakt (lore) und Standort-Empfehlung (roomHint).
 // Die Prozent-Schwellen der Erdfeuchte sind nicht aus Pflegequellen belegt
 // und muessen je Sensor/Erde kalibriert werden - daher soilProvisional.
+// Licht/Temperatur/Luftfeuchte je Art wurden gegen mehrere seriöse
+// Pflege-Ratgeber/Extension-Quellen gegengeprueft (Stand 09/2026); bei
+// widerspruechlichen Quellen wurde der plausibelste Mittelwert uebernommen.
 export const PLANT_TYPES = [
   {
     id: 'begonia', name: 'Forellenbegonie', latin: 'Begonia maculata',
@@ -79,16 +82,16 @@ export const PLANT_TYPES = [
     lore: 'Nach drei bis vier Jahren blühe ich weiß und duftend. Danach kommen grüne Kirschen, die rot werden.',
     roomHint: 'die Küche: warm, feucht, helles Licht',
     soil: { min: 45, max: 70, hint: 'nie austrocknen lassen, kalkarmes Wasser verwenden', provisional: true },
-    light: { min: 1200, max: 15000, hint: 'hell, aber keine direkte Mittagssonne' },
+    light: { min: 1500, max: 15000, hint: 'hell, aber keine direkte Mittagssonne' },
     temp: { min: 18, max: 25, hint: 'im Winter nicht unter 15 °C' },
     humidity: { min: 50, max: 75, hint: 'mag es feucht und warm, nicht neben ein zugiges Fenster' }
   },
   {
     id: 'cactus', name: 'Kaktus', latin: 'Echinopsis chamaecereus',
-    tip: 'Sonnig und trocken. Im Winter gar nicht gießen.',
+    tip: 'Sonnig und trocken. Im Winter nur ganz sparsam gießen.',
     lore: 'Meine Stacheln sind umgebaute Blätter. Sie verdunsten kein Wasser und beschatten mich sogar leicht.',
     roomHint: 'das Schlafzimmer: Südfenster, trocken, im Winter kühl',
-    soil: { min: 5, max: 25, hint: 'von November bis März gar nicht gießen', provisional: true },
+    soil: { min: 5, max: 25, hint: 'von November bis März nur etwa einmal im Monat wenig gießen', provisional: true },
     light: { min: 5000, max: 40000, hint: 'volle Sonne, so viel wie möglich — Südfenster ist perfekt' },
     temp: { min: 10, max: 32, hint: 'Winter kühl bei 8–12 °C, davon hängt die Blüte ab' },
     humidity: { min: 15, max: 45, hint: 'trockene Luft ist kein Problem' }
@@ -101,7 +104,7 @@ export const PLANT_TYPES = [
     soil: { min: 55, max: 85, hint: 'nie austrocknen lassen, Untersetzer immer mit etwas Wasser', provisional: true },
     light: { min: 1000, max: 12000, hint: 'hell bis halbschattig, keine pralle Sonne' },
     temp: { min: 18, max: 25, hint: 'mag es nicht kalt' },
-    humidity: { min: 45, max: 70, hint: 'schätzt spürbare Luftfeuchte' }
+    humidity: { min: 55, max: 75, hint: 'braucht spürbar hohe Luftfeuchte, mind. 55 %' }
   },
   {
     id: 'bonsai', name: 'Bonsai', latin: 'Ficus microcarpa',
@@ -130,7 +133,7 @@ export const PLANT_TYPES = [
     roomHint: 'das Badezimmer: warm, feucht, kein direktes Sonnenlicht',
     soil: { min: 50, max: 80, hint: 'nie ganz austrocknen, Wasser nicht ins Herz gießen', provisional: true },
     light: { min: 200, max: 8000, hint: 'Halbschatten bis helles indirektes Licht' },
-    temp: { min: 18, max: 24, hint: 'keine kalte Zugluft' },
+    temp: { min: 15, max: 24, hint: 'keine kalte Zugluft' },
     humidity: { min: 50, max: 85, hint: 'über 50 % — mag Bad- oder Küchenluft' }
   },
   {
@@ -220,7 +223,7 @@ export const PLANT_TYPES = [
     roomHint: 'ein helles Büro oder heller Flur',
     soil: { min: 30, max: 55, hint: 'obere Erde antrocknen lassen, kalkarmes Wasser', provisional: true },
     light: { min: 1000, max: 15000, hint: 'hell bis halbschattig, keine pralle Sonne' },
-    temp: { min: 18, max: 26, hint: 'keine Zugluft, keine Kälte unter 15 °C' },
+    temp: { min: 16, max: 26, hint: 'keine Zugluft, keine Kälte unter 15 °C' },
     humidity: { min: 35, max: 60, hint: 'normale Zimmerluft reicht' }
   },
   {
