@@ -24,8 +24,12 @@ function SettingRow({ label, sub, value, onChange, last }) {
 
 export function ProfileScreen() {
   const navigation = useNavigation();
-  const { plants, stickers, settings, updateSettings } = useAppData();
+  const { plants, stickers, settings, updateSettings, showToast } = useAppData();
   const sensors = plants.filter((p) => p.hasSensor).map((p) => ({ ...p.sensor, plantName: p.name }));
+
+  function changeSetting(patch) {
+    updateSettings(patch).catch((err) => showToast(err.message));
+  }
 
   return (
     <Screen>
@@ -69,9 +73,9 @@ export function ProfileScreen() {
 
       <Text style={styles.sectionTitle}>Einstellungen</Text>
       <Card style={{ paddingVertical: 4, marginBottom: 20 }}>
-        <SettingRow label="Push-Benachrichtigungen" value={settings.push} onChange={(v) => updateSettings({ push: v })} />
-        <SettingRow label="Erinnerung bei Trockenheit" sub="Push, wenn eine Pflanze Wasser braucht" value={settings.dryReminder} onChange={(v) => updateSettings({ dryReminder: v })} />
-        <SettingRow label="Wochenrückblick" sub="Einmal pro Woche eine Zusammenfassung" value={settings.weeklyRecap} onChange={(v) => updateSettings({ weeklyRecap: v })} last />
+        <SettingRow label="Push-Benachrichtigungen" value={settings.push} onChange={(v) => changeSetting({ push: v })} />
+        <SettingRow label="Erinnerung bei Trockenheit" sub="Push, wenn eine Pflanze Wasser braucht" value={settings.dryReminder} onChange={(v) => changeSetting({ dryReminder: v })} />
+        <SettingRow label="Wochenrückblick" sub="Einmal pro Woche eine Zusammenfassung" value={settings.weeklyRecap} onChange={(v) => changeSetting({ weeklyRecap: v })} last />
       </Card>
 
       <Pressable onPress={() => navigation.navigate('Shop')} style={styles.shopCard}>

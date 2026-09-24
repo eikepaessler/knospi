@@ -24,7 +24,10 @@ export function ShopScreen() {
   const { settings, updateSettings } = useAppData();
 
   useEffect(() => {
-    if (!settings.offerRead) updateSettings({ offerRead: true });
+    // Nur ein "gesehen"-Haekchen fuer das Angebots-Badge - schlaegt der
+    // Request mal fehl (z.B. kurzzeitig kein Server erreichbar), ist das
+    // kein Problem, das den Nutzer mit einer Fehlermeldung stoeren muss.
+    if (!settings.offerRead) updateSettings({ offerRead: true }).catch(() => {});
   }, [settings.offerRead, updateSettings]);
 
   return (
@@ -88,5 +91,5 @@ const styles = StyleSheet.create({
   rowNote: { ...sans(600, 12, { color: colors.mut, marginTop: 2 }) },
   rowPrice: { ...sans(800, 15, { color: colors.acc }) },
   bundleCard: { flexDirection: 'row', alignItems: 'center', gap: 14, ...shadows.md },
-  banner: { height: 320, aspectRatio: 902 / 1744, alignSelf: 'center', borderRadius: radius.xxl, backgroundColor: 'transparent' }
+  banner: { height: 460, aspectRatio: 902 / 1744, alignSelf: 'center', borderRadius: radius.xxl, backgroundColor: 'transparent' }
 });
