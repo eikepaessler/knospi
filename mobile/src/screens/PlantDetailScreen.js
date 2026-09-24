@@ -15,6 +15,16 @@ import { colors, roomColor, toneColor } from '../theme/colors';
 import { radius, shadows } from '../theme/layout';
 import { baloo, sans } from '../theme/typography';
 
+// Gleiches Blatt-Silhouette wie Header.js/TabBar.js - als winziger Punkt
+// vor Metrik-/Raum-Zeilen statt eines schmucklosen farbigen Kaestchens.
+function LeafDot({ color, size = 11 }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 24 24">
+      <Path d="M20 4C10 4 4 10 4 20c10 0 16-6 16-16z" fill={color} />
+    </Svg>
+  );
+}
+
 function Hearts({ bond }) {
   return (
     <View style={{ flexDirection: 'row', gap: 3 }}>
@@ -31,8 +41,8 @@ function Collapsible({ title, meta, open, onToggle, children }) {
       <Pressable onPress={onToggle} style={styles.collapseHead}>
         <Text style={styles.collapseTitle}>{title}</Text>
         {meta && <Text style={styles.collapseMeta}>{meta}</Text>}
-        <Svg width={9} height={9} viewBox="0 0 9 9" style={{ marginLeft: 8, transform: [{ rotate: open ? '225deg' : '45deg' }] }}>
-          <Path d="M1 1l7 7M8 1L1 8" stroke={colors.mut} strokeWidth={1.6} strokeLinecap="round" />
+        <Svg width={12} height={8} viewBox="0 0 12 8" style={{ marginLeft: 8, transform: [{ rotate: open ? '180deg' : '0deg' }] }}>
+          <Path d="M1 1.5 6 6.5 11 1.5" stroke={colors.mut} strokeWidth={1.7} fill="none" strokeLinecap="round" strokeLinejoin="round" />
         </Svg>
       </Pressable>
       {open && <View style={{ marginTop: 10 }}>{children}</View>}
@@ -105,7 +115,7 @@ export function PlantDetailScreen() {
         right={
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Pressable onPress={() => navigation.navigate('RoomDetail', { id: plant.room?.id })} style={styles.roomChip}>
-              <View style={[styles.roomDot, { backgroundColor: rc }]} />
+              <LeafDot color={rc} size={13} />
               <Text style={styles.roomChipText}>{plant.room?.name}</Text>
             </Pressable>
             <Pressable onPress={confirmRemovePlant} style={styles.trashBtn}>
@@ -118,6 +128,11 @@ export function PlantDetailScreen() {
       />
 
       <View style={[styles.stage, shadows.lg]}>
+        {plant.showMood && (
+          <View style={styles.moodBadge}>
+            <Text style={[styles.moodBadgeText, { color: toneColor(plant.tone) }]}>{plant.moodLabel}</Text>
+          </View>
+        )}
         <SpeechBubble>{plant.says}</SpeechBubble>
         <View style={{ marginVertical: 6 }}>
           <PlantAvatar kind={plant.kind} mood={plant.face} size={180} />
@@ -129,11 +144,12 @@ export function PlantDetailScreen() {
         <Text style={styles.together}>{plant.together}</Text>
       </View>
 
-      <Pressable style={styles.speciesRow} onPress={() => setTypePickerOpen((v) => !v)}>
+      <View style={styles.speciesRow}>
         <Text style={styles.speciesText}>{plant.species}</Text>
-        {plant.showMood && <Text style={[styles.moodText, { color: toneColor(plant.tone) }]}>· {plant.moodLabel}</Text>}
-        <Text style={styles.speciesEdit}>· Art ändern</Text>
-      </Pressable>
+        <Pressable onPress={() => setTypePickerOpen((v) => !v)}>
+          <Text style={styles.speciesEdit}>Art ändern</Text>
+        </Pressable>
+      </View>
 
       {typePickerOpen && (
         <Card style={{ marginBottom: 16 }}>
@@ -189,11 +205,14 @@ export function PlantDetailScreen() {
         </Card>
       ) : (
         <>
-          <Text style={styles.sectionLabel}>Was der Sensor gerade spürt</Text>
+          <View style={styles.sectionLabelRow}>
+            <View style={[styles.sectionDot, { backgroundColor: toneColor(plant.tone) }]} />
+            <Text style={styles.sectionLabel}>Was der Sensor gerade spürt</Text>
+          </View>
           <Card style={{ marginBottom: 12, paddingVertical: 4 }}>
             {plant.metrics.map((m, i) => (
               <View key={m.key} style={[styles.metricRow, i === plant.metrics.length - 1 && { borderBottomWidth: 0 }]}>
-                <View style={[styles.metricMarker, { backgroundColor: toneColor(m.status === 'ok' ? 'ok' : m.key === 'soil' && m.status === 'high' ? 'warn' : 'bad') }]} />
+                <LeafDot color={toneColor(m.status === 'ok' ? 'ok' : m.key === 'soil' && m.status === 'high' ? 'warn' : 'bad')} size={13} />
                 <Text style={styles.metricLabel}>{m.label}</Text>
                 <View style={[styles.metricChip, { backgroundColor: colors.soft2 }]}>
                   <Text style={[styles.metricChipText, { color: toneColor(m.status === 'ok' ? 'ok' : 'warn') }]}>{m.text}</Text>
@@ -202,32 +221,48 @@ export function PlantDetailScreen() {
             ))}
           </Card>
 
+          <View style={styles.sectionLabelRow}>
+            <View style={[styles.sectionDot, { backgroundColor: toneColor(plant.tone) }]} />
+            <Text style={styles.sectionLabel}>Letzter Abruf</Text>
+          </View>
           <Card style={{ marginBottom: 18 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <View>
                 <Text style={styles.liveValue}>{plant.metrics[0]?.value}%</Text>
                 <Text style={styles.liveSub}>Erdfeuchte · {timeAgo(plant.readingAt)}</Text>
               </View>
-              <Pressable onPress={refreshReadings} style={styles.refreshBtn}>
+              <Pressable onPress={refreshReadings}>
                 <Text style={styles.refreshText}>Aktualisieren</Text>
               </Pressable>
             </View>
             <View style={styles.liveSide}>
-              <Text style={styles.liveSideText}>{plant.metrics[2]?.value}°C</Text>
-              <Text style={styles.liveSideText}>{plant.metrics[3]?.value}%</Text>
-              <Text style={styles.liveSideText}>{plant.metrics[1]?.value} lx</Text>
+              <View style={styles.liveBox}>
+                <Text style={styles.liveBoxValue}>{plant.metrics[2]?.value}°C</Text>
+                <Text style={styles.liveBoxLabel}>Temperatur</Text>
+              </View>
+              <View style={styles.liveBox}>
+                <Text style={styles.liveBoxValue}>{plant.metrics[3]?.value}%</Text>
+                <Text style={styles.liveBoxLabel}>Luftfeuchte</Text>
+              </View>
+              <View style={styles.liveBox}>
+                <Text style={styles.liveBoxValue}>{plant.metrics[1]?.value} lx</Text>
+                <Text style={styles.liveBoxLabel}>Licht</Text>
+              </View>
             </View>
             {readings.length > 1 && (
               <Sparkline values={readings.map((r) => r.soil_moisture)} width={280} height={46} />
             )}
           </Card>
 
+          <Text style={styles.sectionLabel}>Sensor</Text>
           <Card style={{ marginBottom: 18, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <View>
               <Text style={styles.sensorId}>{plant.sensor.id}</Text>
               <Text style={styles.sensorSub}>Akku {plant.sensor.battery}% · {plant.sensor.connected ? 'verbunden' : 'offline'} · zuletzt {timeAgo(plant.sensor.lastSeen)}</Text>
             </View>
-            <GhostButton label="Trennen" onPress={() => withBusy(() => removeSensor(plant.id))} />
+            <Pressable onPress={() => withBusy(() => removeSensor(plant.id))}>
+              <Text style={styles.linkDanger}>Trennen</Text>
+            </Pressable>
           </Card>
         </>
       )}
@@ -299,17 +334,17 @@ export function PlantDetailScreen() {
 const styles = StyleSheet.create({
   roomChip: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 44, paddingHorizontal: 16, borderRadius: radius.pill, backgroundColor: colors.card, ...shadows.sm },
   trashBtn: { width: 44, height: 44, borderRadius: radius.pill, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center', ...shadows.sm },
-  roomDot: { width: 10, height: 10, borderRadius: 3 },
   roomChipText: { ...sans(800, 14, { color: colors.ink }) },
   stage: { backgroundColor: colors.acc2, borderRadius: radius.xxxl, padding: 18, alignItems: 'center', marginBottom: 14 },
+  moodBadge: { alignSelf: 'flex-start', backgroundColor: colors.ink, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 5, marginBottom: 10 },
+  moodBadgeText: { ...sans(800, 11.5) },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 9, marginTop: 4 },
   name: { ...baloo(700, 30, { color: colors.ink, letterSpacing: -0.5 }) },
   together: { ...sans(600, 13, { color: colors.mut, marginTop: 2 }) },
   heart: { width: 11, height: 11, borderRadius: 5, transform: [{ rotate: '45deg' }] },
-  speciesRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' },
+  speciesRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
   speciesText: { ...sans(600, 15, { color: colors.mut, fontStyle: 'italic' }) },
-  speciesEdit: { ...sans(800, 13, { color: colors.acc }) },
-  moodText: { ...sans(800, 14) },
+  speciesEdit: { ...sans(700, 12.5, { color: colors.acc, textDecorationLine: 'underline' }) },
   searchHead: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
   searchTitle: { ...sans(800, 12.5, { color: colors.ok, textTransform: 'uppercase', letterSpacing: 0.5 }) },
   searchClose: { ...sans(800, 12.5, { color: colors.mut }) },
@@ -324,20 +359,23 @@ const styles = StyleSheet.create({
   diagBadgeText: { ...sans(800, 12, { color: colors.bad }) },
   diagTitle: { ...baloo(600, 19, { color: colors.ink, marginBottom: 4 }) },
   diagBody: { ...sans(600, 14, { color: colors.mut, marginBottom: 14, lineHeight: 19 }) },
+  sectionLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 10 },
+  sectionDot: { width: 7, height: 7, borderRadius: 3.5 },
   sectionLabel: { ...sans(800, 13, { color: colors.ok, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 }) },
   metricRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 13, borderBottomWidth: 1, borderColor: colors.line },
-  metricMarker: { width: 10, height: 10, borderRadius: 3 },
   metricLabel: { flex: 1, ...sans(600, 16, { color: colors.ink }) },
   metricChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: radius.pill },
   metricChipText: { ...sans(700, 13) },
   liveValue: { ...baloo(700, 40, { color: colors.ink }) },
   liveSub: { ...sans(600, 12.5, { color: colors.mut }) },
-  liveSide: { flexDirection: 'row', gap: 14, marginTop: 10, marginBottom: 12 },
-  liveSideText: { ...sans(700, 13, { color: colors.mut }) },
-  refreshBtn: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.pill, backgroundColor: colors.soft },
-  refreshText: { ...sans(800, 12, { color: colors.acc }) },
+  liveSide: { flexDirection: 'row', gap: 10, marginTop: 14, marginBottom: 12 },
+  liveBox: { flex: 1, backgroundColor: colors.soft2, borderRadius: radius.md, paddingVertical: 10, paddingHorizontal: 10 },
+  liveBoxValue: { ...sans(800, 15, { color: colors.ink }) },
+  liveBoxLabel: { ...sans(600, 11, { color: colors.mut, marginTop: 2 }) },
+  refreshText: { ...sans(800, 12.5, { color: colors.acc, textDecorationLine: 'underline' }) },
   sensorId: { ...sans(700, 14, { color: colors.ink }) },
   sensorSub: { ...sans(600, 12, { color: colors.mut, marginTop: 2 }) },
+  linkDanger: { ...sans(800, 13, { color: colors.bad, textDecorationLine: 'underline' }) },
   collapseHead: { flexDirection: 'row', alignItems: 'center', minHeight: 52, borderRadius: radius.pill, borderWidth: 1.5, borderColor: colors.line, backgroundColor: colors.card, paddingHorizontal: 18 },
   collapseTitle: { ...sans(800, 15, { color: colors.ink }) },
   collapseMeta: { ...sans(700, 12, { color: colors.mut, marginLeft: 8 }) },
