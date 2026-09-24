@@ -87,7 +87,7 @@ function NeedyCard({ plant, onPress }) {
     <Pressable onPress={onPress} style={[styles.needyCard, shadows.md]}>
       <View style={styles.needyStage}>
         <SpeechBubble style={styles.needyBubble} textStyle={styles.needyBubbleText}>{plant.says}</SpeechBubble>
-        <PlantAvatar kind={plant.kind} mood={plant.face} size={80} />
+        <PlantAvatar kind={plant.kind} mood={plant.face} size={94} />
       </View>
       <View style={{ paddingTop: 10 }}>
         <Text style={styles.plantName} numberOfLines={1}>{plant.name}</Text>
@@ -158,7 +158,7 @@ function PlantTile({ plant, onPress }) {
             {pct != null ? `${pct}% · ${availableCount} von ${total}` : 'ohne Sensor'}
           </Text>
         </View>
-        <PlantAvatar kind={plant.kind} mood={plant.hasSensor ? plant.face : 'happy'} size={84} />
+        <PlantAvatar kind={plant.kind} mood={plant.hasSensor ? plant.face : 'happy'} size={110} />
       </View>
       <View style={{ paddingTop: 10 }}>
         <Text style={styles.plantName} numberOfLines={1}>{plant.name}</Text>
