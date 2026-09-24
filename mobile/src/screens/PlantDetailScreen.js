@@ -261,30 +261,6 @@ export function PlantDetailScreen() {
       )}
 
       <Collapsible
-        title="Fotoalbum" meta={`${plant.photos.length} ${plant.photos.length === 1 ? 'Foto' : 'Fotos'}`}
-        open={open.gallery} onToggle={() => setOpen((o) => ({ ...o, gallery: !o.gallery }))}
-      >
-        <Card>
-          <View style={styles.photoGrid}>
-            {plant.photos.map((p) => (
-              <View key={p.id} style={styles.photoTile}>
-                <Image source={{ uri: p.uri }} style={styles.photoImg} />
-                {p.isFirst && <View style={styles.photoBadge}><Text style={styles.photoBadgeText}>EINZUG</Text></View>}
-                <Text style={styles.photoDate}>{new Date(p.takenAt).toLocaleDateString('de-DE')}</Text>
-              </View>
-            ))}
-            <View style={styles.photoTile}>
-              <Pressable style={styles.photoAdd} onPress={takePhoto}>
-                <Text style={styles.photoAddPlus}>+</Text>
-                <Text style={styles.photoAddLabel}>Foto{'\n'}machen</Text>
-              </Pressable>
-              <Text style={[styles.photoDate, { opacity: 0 }]}> </Text>
-            </View>
-          </View>
-        </Card>
-      </Collapsible>
-
-      <Collapsible
         title="Richtwerte meiner Art" meta={`${plant.richtwerte.length} Werte`}
         open={open.richtwerte} onToggle={() => setOpen((o) => ({ ...o, richtwerte: !o.richtwerte }))}
       >
@@ -322,6 +298,30 @@ export function PlantDetailScreen() {
         <Card>
           <Text style={styles.cardTitleBaloo}>Gut zu wissen</Text>
           <Text style={styles.cardBody}>{plant.type.lore}</Text>
+        </Card>
+      </Collapsible>
+
+      <Collapsible
+        title="Fotoalbum" meta={`${plant.photos.length} ${plant.photos.length === 1 ? 'Foto' : 'Fotos'}`}
+        open={open.gallery} onToggle={() => setOpen((o) => ({ ...o, gallery: !o.gallery }))}
+      >
+        <Card>
+          <View style={styles.photoGrid}>
+            {plant.photos.map((p) => (
+              <View key={p.id} style={styles.photoTile}>
+                <Image source={{ uri: p.uri }} style={styles.photoImg} />
+                {p.isFirst && <View style={styles.photoBadge}><Text style={styles.photoBadgeText}>EINZUG</Text></View>}
+                <Text style={styles.photoDate}>{new Date(p.takenAt).toLocaleDateString('de-DE')}</Text>
+              </View>
+            ))}
+            <View style={styles.photoTile}>
+              <Pressable style={styles.photoAdd} onPress={takePhoto}>
+                <Text style={styles.photoAddPlus}>+</Text>
+                <Text style={styles.photoAddLabel}>Foto{'\n'}machen</Text>
+              </Pressable>
+              <Text style={[styles.photoDate, { opacity: 0 }]}> </Text>
+            </View>
+          </View>
         </Card>
       </Collapsible>
 
